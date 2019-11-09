@@ -1,0 +1,40 @@
+﻿@model int
+@{
+    ViewData["Title"] = "Game";
+}
+    <div class="cont">
+        <canvas id="gameBody"></canvas>
+        <div class="canvas">
+            <div class="information">
+                <h2>Player Physics Stats:</h2>
+                <ul>
+                    <li id="position">
+                        Position: 0, 0
+                    </li>
+                    <li id="inertia">
+                        Inertia: 0
+                    </li>
+                    <li id="torque">
+                        Torque: 0
+                    </li>
+                    <li id="velocity">
+                        Velocity: 0, 0
+                    </li>
+                    <li id="angularSpeed">
+                        Angular Speed: 0
+                    </li>
+                    <li id="angularVelocity">
+                        Angular Velocity: 0
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+
+@section Scripts
+{
+    <script src="~/lib/matter-js/matter.min.js"></script>
+<script src="@("/Games/" + Model + "/js/physics_game.js")"></script>
+
+}
