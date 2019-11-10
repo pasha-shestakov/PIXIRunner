@@ -3,4 +3,7 @@ Assets:
 		Images:
 			https://craftpix.net/freebies/free-pixel-art-tiny-hero-sprites/
 		Code:
-			
+			https://stackoverflow.com/questions/30678438/matter-js-sprite-size
+			https://stackoverflow.com/questions/22686917/matter-js-change-colors/54617580
+			https://brm.io/matter-js/docs/
+			https://github.com/liabru/matter-js/issues/104

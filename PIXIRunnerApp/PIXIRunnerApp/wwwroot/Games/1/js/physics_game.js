@@ -1,4 +1,10 @@
 ﻿
+
+//game specific globals
+var max_velocity = 3;
+
+
+//Physics.JS globals
 var Engine = Matter.Engine,
     Render = Matter.Render,
     Runner = Matter.Runner,
@@ -107,12 +113,12 @@ document.addEventListener('keydown', function (event) {
     if (left) {
         //set our texture to the sprite facing left.
         player.render.sprite.texture = '/Games/1/images/Pink_Monster_L.png';
-        Body.translate(player, { x: -10, y: 0 });
+        Body.applyForce(player, { x: player.position.x, y: player.position.y }, { x: -0.03, y: 0 })
     }
     if (right) {
         //set our texture to the sprite facing right.
         player.render.sprite.texture = '/Games/1/images/Pink_Monster_R.png';
-        Body.translate(player, { x: 10, y: 0 });
+        Body.applyForce(player, { x: player.position.x, y: player.position.y }, { x: 0.03, y: 0 })
     }
 
     
