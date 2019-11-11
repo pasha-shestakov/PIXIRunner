@@ -34,11 +34,12 @@ namespace PIXIRunnerApp
                 options.CheckConsentNeeded = context => true;
                 options.MinimumSameSitePolicy = SameSiteMode.None;
             });
-
-            var connection = @"Server=(localdb)\mssqllocaldb;Database=PIXIRunner;Trusted_Connection=True;ConnectRetryCount=0";
-            services.AddDbContext<UserContext>(options => options.UseSqlServer(connection));
+            
+            services.AddDbContext<UserContext>(options => options.UseSqlServer(Configuration.GetConnectionString("UserContextConnection")));
+            services.AddDbContext<GameContext>(options => options.UseSqlServer(Configuration.GetConnectionString("UserContextConnection")));
 
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
+
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

@@ -26,9 +26,11 @@ namespace PIXIRunnerApp
                 try
                 {
                     var userContext = services.GetRequiredService<UserContext>();
+                    var gameContext = services.GetRequiredService<GameContext>();
                     var userManager = services.GetRequiredService<UserManager<IdentityUser>>();
 
-                    DbInitializer.SeedUsers(userContext, userManager);
+                    List<string> userIDs = DbInitializer.SeedUsers(userContext, userManager);
+                    DbInitializer.SeedSaveState(gameContext, userIDs);
                 }
                 catch (Exception ex)
                 {

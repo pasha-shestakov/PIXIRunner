@@ -1,10 +1,16 @@
 ﻿
 
+//needs to be loaded from the DB.
+var lives = 3;
+var checkpoint = 0;
+var character = 3;
+
+
 //game specific globals
 var max_velocity = 2;
 var num_rocks = 10;
 var projectiles = [];
-var projectileGravity = true;
+var projectileGravity = false;
 //Physics.JS globals
 var Engine = Matter.Engine,
     Render = Matter.Render,
@@ -202,6 +208,10 @@ function updateStats(body) {
     $("#velocity").html("Velocity: " + body.velocity.x + ", " + body.velocity.y);
     $("#angularSpeed").html("Angular Speed: " + body.angularSpeed);
     $("#angularVelocity").html("Angular Velocity: " + body.angularVelocity);
+
+    $("#lives").html("Lives: " + lives);
+    $("#checkpoint").html("Checkpoint: " + checkpoint);
+    $("#character").html("Character: " + character);
 }
 
 function move(direction_type) {
