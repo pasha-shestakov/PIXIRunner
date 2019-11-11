@@ -80,11 +80,12 @@ window.setInterval(updateStats, 100, player);
 
 
 //user controls A(LEFT), D(RIGHT), {W,SPACE}(JUMP)
-var up, down, left, right = false;
+var up, left, right = false;
+var upID, leftID, rightID;
 var grounded = true;
 document.addEventListener('keydown', function (event) {
 
-
+    console.log("keycommand: " + event.code);
     if (event.code == 'KeyW' || event.code == "Space") { //UP (i.e. jump)
         up = true;
     }
@@ -103,22 +104,17 @@ document.addEventListener('keydown', function (event) {
 
     //we can only jump if we are grounded.
     if (up && grounded) {
-        //applying upward force on player body.
-        Body.applyForce(player, { x: player.position.x, y: player.position.y }, { x: 0, y: -0.1 })
-        grounded = false; //we are no longer grounded.
+
+        move("up");
+
     }
 
-    
-
-    if (left) {
-        //set our texture to the sprite facing left.
-        player.render.sprite.texture = '/Games/1/images/Pink_Monster_L.png';
-        Body.applyForce(player, { x: player.position.x, y: player.position.y }, { x: -0.03, y: 0 })
+    if (left && leftID == null) {
+        //start movement on another thread until that key is released.
+        leftID = setInterval(move, 30, "left");
     }
-    if (right) {
-        //set our texture to the sprite facing right.
-        player.render.sprite.texture = '/Games/1/images/Pink_Monster_R.png';
-        Body.applyForce(player, { x: player.position.x, y: player.position.y }, { x: 0.03, y: 0 })
+    if (right && rightID == null) {
+        rightID = setInterval(move, 30, "right");
     }
 
     
@@ -132,9 +128,13 @@ document.addEventListener('keyup', function (event) {
         up = false;
     }
     if (event.code == 'KeyA') { //LEFT
+        clearInterval(leftID);
+        leftID = null;
         left = false;
     }
     if (event.code == 'KeyD') { //RIGHT
+        clearInterval(rightID);
+        rightID = null;
         right = false;
     }
 });
@@ -147,4 +147,42 @@ function updateStats(body) {
     $("#velocity").html("Velocity: " + body.velocity.x + ", " + body.velocity.y);
     $("#angularSpeed").html("Angular Speed: " + body.angularSpeed);
     $("#angularVelocity").html("Angular Velocity: " + body.angularVelocity);
+}
+
+function move(direction_type) {
+        if (direction_type == "left") {
+            //set our texture to the sprite facing left.
+            player.render.sprite.texture = '/Games/1/images/Pink_Monster_L.png';
+            console.log("going left with velocity: " + Math.abs(player.velocity.x))
+            if (Math.abs(player.velocity.x) <= max_velocity) {
+                if (!grounded)
+                    Body.applyForce(player, { x: player.position.x, y: player.position.y }, { x: -0.015, y: 0 })
+                else
+                    Body.applyForce(player, { x: player.position.x, y: player.position.y }, { x: -0.03, y: 0 })
+
+            }
+            else
+                console.log("too fast: " + left);
+        }
+        else if (direction_type == "right") {
+            //set our texture to the sprite facing right.
+            player.render.sprite.texture = '/Games/1/images/Pink_Monster_R.png';
+            console.log("going right with velocity: " + Math.abs(player.velocity.x))
+            if (Math.abs(player.velocity.x) <= max_velocity) {
+                if (!grounded)
+                    Body.applyForce(player, { x: player.position.x, y: player.position.y }, { x: 0.015, y: 0 })
+                else
+                    Body.applyForce(player, { x: player.position.x, y: player.position.y }, { x: 0.03, y: 0 })
+            }
+            else
+                console.log("too fast: " + right);
+        } else if (direction_type == "up") {
+            //applying upward force on player body.
+
+            Body.applyForce(player, { x: player.position.x, y: player.position.y }, { x: 0, y: -0.1 })
+            grounded = false; //we are no longer grounded.
+
+            console.log("player.velocity.x: " + player.velocity.x);
+        }
+    
 }
