@@ -1,8 +1,8 @@
 ﻿
 
 //game specific globals
-var max_velocity = 3;
-
+var max_velocity = 2;
+var num_rocks = 10;
 
 //Physics.JS globals
 var Engine = Matter.Engine,
@@ -42,27 +42,33 @@ Render.run(render);
 var runner = Runner.create();
 Runner.run(runner, engine);
 
-var player = Bodies.rectangle(30, 750, 50, 70, {
+
+var player = Bodies.rectangle(30, 740, 20, 65, {
     isStatic: false,
     inertia: Infinity, //Prevent rotation.
     render: {
-        fillStyle: "#7a0a85",
+        //fillStyle: "#7a0a85",
         sprite: {
             texture: '/Games/1/images/Pink_Monster_R.png',
-            xScale: 2,
-            yScale: 2
+            xScale: 2.3,
+            yScale: 2.3
         }
     }
 })
 
-// add bodies
-World.add(world, [
-    player,
-    Bodies.rectangle(0, 800, 2000, 50, { isStatic: true, render: { fillStyle: "#afafaf" }}),
-    Bodies.polygon(300, 760, 3, 30, { isStatic: true, angle: 1.5708, render: { fillStyle: "#2d9919"}}),
-    Bodies.polygon(500, 760, 3, 30, { isStatic: true, angle: 1.5708, render: { fillStyle: "#2d9919" }}),
-    Bodies.polygon(700, 760, 3, 30, { isStatic: true, angle: 1.5708, render: { fillStyle: "#2d9919" }})
-]);
+if (typeof $ !== 'undefined') {
+
+    // add bodies
+    World.add(world, [
+        player,
+        Bodies.rectangle(0, 800, 2000, 50, { isStatic: true, render: { fillStyle: "#afafaf" } }),
+        Bodies.polygon(300, 760, 3, 30, { isStatic: true, angle: 1.5708, render: { fillStyle: "#2d9919" } }),
+        Bodies.polygon(500, 760, 3, 30, { isStatic: true, angle: 1.5708, render: { fillStyle: "#2d9919" } }),
+        Bodies.polygon(700, 760, 3, 30, { isStatic: true, angle: 1.5708, render: { fillStyle: "#2d9919" } }),
+        Bodies.rectangle(30, 600, 200, 50, { isStatic: true, render: { fillStyle: "#2d9919" } })
+    ]);
+}
+
 
 
 //gravity
@@ -75,7 +81,7 @@ engine.world.gravity.y = 1;
 });*/
 
 
-
+//update the overlay with debug information
 window.setInterval(updateStats, 100, player);
 
 
@@ -139,6 +145,31 @@ document.addEventListener('keyup', function (event) {
     }
 });
 
+document.addEventListener("click", function (event) {
+    var x_1 = event.offsetX;
+    var y_1 = event.offsetY;
+
+    var x_2 = player.position.x;
+    var y_2 = player.position.y - 30;
+
+    var throwspeed = 0.001;
+    var rock = Bodies.rectangle(x_2, y_2, 5, 5, {
+        isStatic: false,
+        render: {
+            //fillStyle: "#7a0a85",
+            sprite: {
+                texture: '/Games/1/images/Rock.png'
+            }
+        }
+    });
+    World.add(world, rock);
+    var angle = Math.atan2((y_2 - y_1), (x_2 - x_1)) * 180 / Math.PI;
+    var v_x = Math.cos(angle) * throwspeed;
+    var v_y = Math.sin(angle) * throwspeed;
+    console.log(v_x, v_y);
+    Body.applyForce(rock, { x: rock.position.x, y: rock.position.y }, { x: v_x, y: v_y })
+})
+
 function updateStats(body) {
     //for debugging physics purposes. Displayed as an overlay on our game panel.
     $("#position").html("Position: " + body.position.x + ", " + body.position.y);
@@ -158,7 +189,7 @@ function move(direction_type) {
                 if (!grounded)
                     Body.applyForce(player, { x: player.position.x, y: player.position.y }, { x: -0.015, y: 0 })
                 else
-                    Body.applyForce(player, { x: player.position.x, y: player.position.y }, { x: -0.03, y: 0 })
+                    Body.applyForce(player, { x: player.position.x, y: player.position.y }, { x: -0.02, y: 0 })
 
             }
             else
@@ -172,14 +203,14 @@ function move(direction_type) {
                 if (!grounded)
                     Body.applyForce(player, { x: player.position.x, y: player.position.y }, { x: 0.015, y: 0 })
                 else
-                    Body.applyForce(player, { x: player.position.x, y: player.position.y }, { x: 0.03, y: 0 })
+                    Body.applyForce(player, { x: player.position.x, y: player.position.y }, { x: 0.02, y: 0 })
             }
             else
                 console.log("too fast: " + right);
         } else if (direction_type == "up") {
             //applying upward force on player body.
 
-            Body.applyForce(player, { x: player.position.x, y: player.position.y }, { x: 0, y: -0.1 })
+            Body.applyForce(player, { x: player.position.x, y: player.position.y }, { x: 0, y: -0.05 })
             grounded = false; //we are no longer grounded.
 
             console.log("player.velocity.x: " + player.velocity.x);
