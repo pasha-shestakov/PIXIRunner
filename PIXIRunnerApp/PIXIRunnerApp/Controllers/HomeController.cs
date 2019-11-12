@@ -10,7 +10,7 @@ namespace PIXIRunnerApp.Controllers
 {
     public class HomeController : Controller
     {
-        public IActionResult Index()
+        public IActionResult _Host()
         {
             return View();
         }
