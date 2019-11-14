@@ -1,27 +1,10 @@
-﻿//sets focus on gameBody
-$("#gameBody").focus();
-
-//prevents user from losing focus on gameBody
-$('#gameBody').blur(function (event) {
-    setTimeout(function () { $("#gameBody").focus(); }, 20);
-});
+﻿
 
 //needs to be loaded from the DB.
 var lives = 3;
 var checkpoint = 0;
 var character = 3;
 
-//uncomment and fill in for DB here.
-/*
-$(document).ready(function () {
-    $.ajax(
-
-    )
-});
-*/
-
-//used for pausing the game.
-var isPaused = false;
 
 //game specific globals
 var max_velocity = 2;
@@ -67,13 +50,14 @@ Render.run(render);
 var runner = Runner.create();
 Runner.run(runner, engine);
 
-//position(x,y)(30, 740) size(w,h)(20,65)
+
 var player = Bodies.rectangle(30, 740, 20, 65, {
     isStatic: false,
     inertia: Infinity, //Prevent rotation.
     render: {
+        //fillStyle: "#7a0a85",
         sprite: {
-            texture: '/Games/1/images/Pink_Monster_R.png', //start facing right
+            texture: '/Games/1/images/Pink_Monster_R.png',
             xScale: 2.3,
             yScale: 2.3
         }
@@ -91,7 +75,7 @@ if (typeof $ !== 'undefined') {
         Bodies.polygon(500, 760, 3, 30, { isStatic: true, angle: 1.5708, render: { fillStyle: "#2d9919" } }),
         Bodies.polygon(700, 760, 3, 30, { isStatic: true, angle: 1.5708, render: { fillStyle: "#2d9919" } }),
         Bodies.rectangle(30, 600, 200, 50, { isStatic: true, render: { fillStyle: "#2d9919" } }),
-        throwOrigin //for testing
+        throwOrigin
     ]);
 }
 
@@ -127,64 +111,42 @@ window.setInterval(updateStats, 100, player);
 
 
 //user controls A(LEFT), D(RIGHT), {W,SPACE}(JUMP)
-var up, left, right, inv_open = false;
+var up, left, right = false;
 var upID, leftID, rightID;
 var grounded = true;
 document.addEventListener('keydown', function (event) {
 
-    //console.log("keycommand: " + event.code); //debugging
+    //console.log("keycommand: " + event.code);
+    if (event.code == 'KeyW' || event.code == "Space") { //UP (i.e. jump)
+        up = true;
+    }
 
-    //open/close inventory and pause/unpause game.
-    if (event.code == 'Tab') {
-        event.preventDefault()
-        if (!inv_open) {
-            inv_open = true;
-            pause_game();
-        } else if (inv_open) {
-            inv_open = false;
-            unpause_game();
-        }
+
+    if (event.code == 'KeyA') { //LEFT
+        left = true;
+    }
+    if (event.code == 'KeyD') { //RIGHT
+        right = true;
+    }
+
+    //if the velocity is within this threshhold, allow a jump to be processed
+    if (player.velocity.y <= 0.06 && player.velocity.y >= -0.06)
+        grounded = true; //this means the player has come to rest (or near it at least), we mark it as grounded.
+
+    //we can only jump if we are grounded.
+    if (up && grounded) {
+
+        move("up");
 
     }
 
-    //only fire events if the game is unpaused.
-    if (!isPaused) {
-        if (event.code == 'KeyW' || event.code == "Space") { //UP (i.e. jump)
-            up = true;
-        }
-
-
-        if (event.code == 'KeyA') { //LEFT
-            left = true;
-        }
-        if (event.code == 'KeyD') { //RIGHT
-            right = true;
-        }
-
-
-        //if the velocity is within this threshhold, allow a jump to be processed
-        if (player.velocity.y <= 0.06 && player.velocity.y >= -0.06)
-            grounded = true; //this means the player has come to rest (or near it at least), we mark it as grounded.
-
-        //we can only jump if we are grounded.
-        if (up && grounded) {
-
-            move("up");
-
-        }
-
-        if (left && leftID == null) {
-            //start movement on another thread until that key is released.
-            leftID = setInterval(move, 30, "left");
-        }
-        if (right && rightID == null) {
-            rightID = setInterval(move, 30, "right");
-        }
+    if (left && leftID == null) {
+        //start movement on another thread until that key is released.
+        leftID = setInterval(move, 30, "left");
     }
-    
-    
-
-
+    if (right && rightID == null) {
+        rightID = setInterval(move, 30, "right");
+    }
 
     
 });
@@ -209,35 +171,33 @@ document.addEventListener('keyup', function (event) {
 });
 
 document.addEventListener("click", function (event) {
-    //only allow throwing if game is unpaused.
-    if (!isPaused) {
-        var x_1 = event.offsetX;
-        var y_1 = event.offsetY;
 
-        var x_2 = throwOrigin.position.x;
-        var y_2 = throwOrigin.position.y;
-
-        var v_1 = Vector.create(x_1, y_1);
-        var v_2 = Vector.create(x_2, y_2);
-        var throwspeed = 0.001;
-        var rock = Bodies.rectangle(x_2, y_2, 5, 5, {
-            isStatic: false,
-            render: {
-                //fillStyle: "#7a0a85",
-                sprite: {
-                    texture: '/Games/1/images/Rock.png'
-                }
-            }
-        });
-        World.add(world, rock);
-        projectiles.push(rock);
-        var angle = Vector.angle(v_1, v_2);
-        var v_x = -1 * (Math.cos(angle) * throwspeed);
-        var v_y = -1 * (Math.sin(angle) * throwspeed);
-        console.log("Throw: " + v_x + ", " + v_y);
-        Body.applyForce(rock, { x: rock.position.x, y: rock.position.y }, { x: v_x, y: v_y })
-    }
     
+    var x_1 = event.offsetX;
+    var y_1 = event.offsetY;
+
+    var x_2 = throwOrigin.position.x;
+    var y_2 = throwOrigin.position.y;
+
+    var v_1 = Vector.create(x_1, y_1);
+    var v_2 = Vector.create(x_2, y_2);
+    var throwspeed = 0.001;
+    var rock = Bodies.rectangle(x_2, y_2, 5, 5, {
+        isStatic: false,
+        render: {
+            //fillStyle: "#7a0a85",
+            sprite: {
+                texture: '/Games/1/images/Rock.png'
+            }
+        }
+    });
+    World.add(world, rock);
+    projectiles.push(rock);
+    var angle = Vector.angle(v_1, v_2);
+    var v_x = -1 * (Math.cos(angle) * throwspeed);
+    var v_y = -1 * (Math.sin(angle) * throwspeed);
+    console.log("Throw: " + v_x + ", " + v_y);
+    Body.applyForce(rock, { x: rock.position.x, y: rock.position.y }, { x: v_x, y: v_y})
 })
 
 function updateStats(body) {
@@ -287,20 +247,3 @@ function move(direction_type) {
         }
     
 }
-
-function pause_game() {
-    isPaused = true;
-    projectiles.forEach((body, index) => {
-        body.isStatic = true;
-    })
-    player.isStatic = true;
-}
-
-function unpause_game() {
-    isPaused = false;
-    projectiles.forEach((body, index) => {
-        body.isStatic = false;
-    })
-    player.isStatic = false;
-}
-
