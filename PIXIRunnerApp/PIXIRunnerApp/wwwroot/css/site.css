@@ -81,4 +81,5 @@ body {
     z-index: 11;
     background: grey;
     padding: 10px;
+    visibility: hidden;
 }
