@@ -82,3 +82,7 @@ body {
     background: grey;
     padding: 10px;
 }
+
+.player_info {
+    color: white;
+}
