@@ -1,12 +1,28 @@
 ﻿@model Game
 @{
     ViewData["Title"] = Model.name;
+    var saves = ViewData["saves"] as List<SaveState>;
+    
 }
 
 <h3>@Model.name</h3>
-<div class="cont">
+<div id="@Model.gameID" class="cont">
     <canvas id="gameBody"></canvas>
     <div class="canvas">
+        <div id="launcher">
+            <button> New Game</button>
+
+            @if (saves != null)
+            {
+                @foreach (var save in saves)
+                {
+                    <button id="@save.saveStateID">Load Save @save.saveStateID</button>
+                }
+            }
+        </div>
+        <div class="player_info">
+            <span id="lives"></span>
+        </div>
         <div class="information">
             <h2>Player Physics Stats:</h2>
             <ul>
@@ -28,15 +44,6 @@
                 <li id="angularVelocity">
                     Angular Velocity: 0
                 </li>
-                <li id="lives">
-
-                </li>
-                <li id="checkpoint">
-
-                </li>
-                <li id="character">
-
-                </li>
             </ul>
         </div>
     </div>
@@ -46,6 +53,7 @@
 @section Scripts
 {
     <script src="~/lib/matter-js/matter.min.js"></script>
-<script src="@("/Games/" + Model.gameID + "/js/physics_game.js")"></script>
+    <script type="module" src="@("/Games/" + Model.gameID + "/js/game_controller.js")"></script>
+
 
 }

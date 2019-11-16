@@ -1,60 +1,94 @@
-﻿
+﻿export class PhysicsGame  {
+    constructor() {}
+    lives;
+    checkpoint;
+    character;
 
-//needs to be loaded from the DB.
-var lives = 3;
-var checkpoint = 0;
-var character = 3;
-
-var game_width = 2000;
-var game_height = 800;
-
-var screenX = 1000;
-var screenY = 800;
-
-//game specific globals
-var max_velocity = 2;
-var num_rocks = 10;
-var projectiles = {};
-var projectileGravity = false;
-//Physics.JS globals
-var Engine = Matter.Engine,
-    Render = Matter.Render,
-    Runner = Matter.Runner,
-    Composites = Matter.Composites,
-    Common = Matter.Common,
-    MouseConstraint = Matter.MouseConstraint,
-    Mouse = Matter.Mouse,
-    World = Matter.World,
-    Bodies = Matter.Bodies,
-    Body = Matter.Body,
-    Vector = Matter.Vector,
+    Engine = Matter.Engine;
+    Render = Matter.Render;
+    Runner = Matter.Runner;
+    Composites = Matter.Composites;
+    Common = Matter.Common;
+    MouseConstraint = Matter.MouseConstraint;
+    Mouse = Matter.Mouse;
+    World = Matter.World;
+    Bodies = Matter.Bodies;
+    Body = Matter.Body;
+    Vector = Matter.Vector;
     Events = Matter.Events;
-// create engine
-var engine = Engine.create(),
-    world = engine.world;
+    engine;
+    world;
+    player;
+    isPaused;
+    max_velocity = 2;
+    num_rocks = 10;
+    projectiles = [];
+    projectileGravity = false;
+    grounded;
 
-// create renderer
-var canvas = document.getElementById('gameBody');
-
-var render = Render.create({
-    canvas: canvas,
-    engine: engine,
-    options: {
-        width: 1000,
-        height: 800,
-        showVelocity: false,
-        showAngleIndicator: false,
-        wireframes: false,
-        background: "#000000"
+    onLoad(load) {
+        this.lives = load.lives;
+        this.checkpoint = load.checkpoint;
+        this.character = load.character;
+        document.getElementById("lives").innerHTML = load.lives;
     }
-});
 
-Render.run(render);
+    preInit() {
+        // create engine
+        this.engine = this.Engine.create();
+        this.world = this.engine.world;
 
-// create runner
-var runner = Runner.create();
-Runner.run(runner, engine);
+        // create renderer
+        var canvas = document.getElementById('gameBody');
 
+        var render = this.Render.create({
+            canvas: canvas,
+            engine: this.engine,
+            options: {
+                width: 1000,
+                height: 800,
+                showVelocity: false,
+                showAngleIndicator: false,
+                wireframes: false,
+                background: "#000000"
+            }
+        });
+
+        this.Render.run(render);
+    }
+
+    init() {
+
+        //sets focus on gameBody
+        $("#gameBody").focus();
+
+        //prevents user from losing focus on gameBody
+        $('#gameBody').blur(function (event) {
+            setTimeout(function () { $("#gameBody").focus(); }, 20);
+        });
+
+        // create runner
+        var runner = this.Runner.create();
+        this.Runner.run(runner, this.engine);
+
+        this.loadPlayers();
+        this.physicsEvents();
+       // this.characterControls();
+    }
+
+    loadPlayers() {
+        //position(x,y)(30, 740) size(w,h)(20,65)
+        this.player = this.Bodies.rectangle(30, 740, 20, 65, {
+            isStatic: false,
+            inertia: Infinity, //Prevent rotation.
+            render: {
+                sprite: {
+                    texture: '/Games/1/images/Pink_Monster_R.png', //start facing right
+                    xScale: 2.3,
+                    yScale: 2.3
+                }
+            }
+        })
 //collision filters
 var defaultFilter = 0x0001,
     playerFilter = 0x0002,
@@ -106,8 +140,7 @@ if (typeof $ !== 'undefined') {
 
 
 
-//gravity
-engine.world.gravity.y = 1;
+    //gravity
 
 //every update frame
 Events.on(engine, 'beforeUpdate', function () {
@@ -204,8 +237,6 @@ Render.lookAt(render, {
 });
 
 
-//update the overlay with debug information
-//window.setInterval(updateStats, 100, player);
 
 
 //user controls A(LEFT), D(RIGHT), {SPACE}(JUMP)
@@ -218,6 +249,41 @@ document.addEventListener('keydown', function (event) {
     if (event.code == "Space") { //UP (i.e. jump)
         up = true;
     }
+    physicsEvents() {
+        //update the overlay with debug information
+        window.setInterval(this.updateStats.bind(this), 100, this.player);
+        this.engine.world.gravity.y = 1;
+        this.Events.on(this.engine, 'beforeUpdate', function () {
+            var gravity = this.engine.world.gravity;
+            //console.log(engine);
+            if (!this.projectileGravity) {
+                this.projectiles.forEach((body, index) => {
+                    this.Body.applyForce(body, body.position, {
+                        x: -gravity.x * gravity.scale * body.mass,
+                        y: -gravity.y * gravity.scale * body.mass
+                    });
+                })
+            }
+        }.bind(this));
+    }
+
+    characterControls(throwOrigin) {
+        //user controls A(LEFT), D(RIGHT), {W,SPACE}(JUMP)
+        var up, left, right, inv_open = false;
+        var upID, leftID, rightID;
+        this.grounded = true;
+        document.addEventListener('keydown', function (event) {
+            //console.log("keycommand: " + event.code); //debugging
+            //open/close inventory and pause/unpause game.
+            if (event.code == 'Tab') {
+                event.preventDefault()
+                if (!inv_open) {
+                    inv_open = true;
+                    pause_game();
+                } else if (inv_open) {
+                    inv_open = false;
+                    unpause_game();
+                }
 
     if (event.code == 'KeyW') { //CLIMB
         climb = true;

@@ -83,3 +83,7 @@ body {
     padding: 10px;
     visibility: hidden;
 }
+
+.player_info {
+    color: white;
+}
