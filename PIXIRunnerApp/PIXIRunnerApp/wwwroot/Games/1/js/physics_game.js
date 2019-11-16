@@ -273,15 +273,15 @@
 
             //we can only jump if we are grounded and not climbing
             if (up && this.grounded && !this.climbing) {
-                move("up");
+                this.move("up");
             }
 
             if (left && !this.climbing && leftID == null) {
                 //start movement on another thread until that key is released.
-                leftID = setInterval(this.move, 30, "left");
+                leftID = setInterval(this.move.bind(this), 30, "left");
             }
             if (right && !this.climbing && rightID == null) {
-                rightID = setInterval(this.move, 30, "right");
+                rightID = setInterval(this.move.bind(this), 30, "right");
             }
 
             //climbing
@@ -432,7 +432,7 @@
             }
         } else if (direction_type == "up") {
             //applying upward force on player body.
-            this.Body.applyForce(player, { x: this.player.position.x, y: this.player.position.y }, { x: 0, y: -0.05 });
+            this.Body.applyForce(this.player, { x: this.player.position.x, y: this.player.position.y }, { x: 0, y: -0.05 });
 
         } else if (direction_type == "ladderUp") {
             this.Body.translate(this.player, { x: 0, y: -5 });
