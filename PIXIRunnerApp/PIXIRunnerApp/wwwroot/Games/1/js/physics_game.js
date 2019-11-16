@@ -362,8 +362,8 @@
         document.addEventListener("click", function (event) {
 
 
-            var x_1 = event.offsetX;
-            var y_1 = event.offsetY;
+            var x_1 = event.offsetX + this.render.bounds.min.x;
+            var y_1 = event.offsetY + this.render.bounds.min.y;
 
             var x_2 = this.player.position.x;
             var y_2 = this.player.position.y;
@@ -470,10 +470,11 @@
         this.player = this.createPlayer();
         this.World.add(this.world, this.player);
 
-        this.Render.lookAt(this.render, {
-            min: { x: 0, y: 0 },
-            max: { x: this.screenX, y: this.screenY }
-        });
+        this.screenXMin = 0;
+        this.screenXMax = this.screenX;
+        this.render.bounds.min.x = 0;
+        this.render.bounds.max.x = this.screenX;
+        
         
     }
 
