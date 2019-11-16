@@ -52,8 +52,8 @@
 
     screenXMin = 0;
     screenXMax = 1000;
-
     
+    Bounds = Matter.Bounds;
 
     onLoad(load) {
         this.lives = load.lives;
@@ -148,7 +148,7 @@
             this.player
         ]);
     }
-
+ 
     physicsEvents() {
         //update the overlay with debug information
         window.setInterval(this.updateStats.bind(this), 100, this.player);
@@ -173,7 +173,19 @@
                     y: -gravity.y * gravity.scale * this.player.mass
                 });
             }
+            if (this.render.bounds.min.x < this.screenXMin) {
+                
+                this.render.bounds.max.x += 2;
+                this.render.bounds.min.x += 2;
+            }
+            else if (this.render.bounds.max.x > this.screenXMax) {
 
+                this.render.bounds.max.x -= 2;
+                this.render.bounds.min.x -= 2;
+            }
+
+
+       
         }.bind(this));
 
 
@@ -451,13 +463,6 @@
         } else if (direction_type == "ladderRight") {
             this.Body.translate(this.player, { x: 5, y: 0 });
         }
-
-
-        this.Render.lookAt(this.render, {
-            min: { x: this.screenXMin, y: 0 },
-            max: { x: this.screenXMax, y: this.screenY }
-        });
-
     }
 
     respawn() {
