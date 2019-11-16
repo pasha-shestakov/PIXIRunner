@@ -166,6 +166,14 @@
                     });
                 }
             }
+
+            if (this.climbing) {
+                this.Body.applyForce(this.player, this.player.position, {
+                    x: -gravity.x * gravity.scale * this.player.mass,
+                    y: -gravity.y * gravity.scale * this.player.mass
+                });
+            }
+
         }.bind(this));
 
 
@@ -374,10 +382,10 @@
             var v_x = -1 * (Math.cos(angle) * throwspeed);
             var v_y = -1 * (Math.sin(angle) * throwspeed);
             if (this.throwAnim === undefined)
-                this.throwAnim = setInterval(this.throwAnimation, 60, dir);
+                this.throwAnim = setInterval(this.throwAnimation.bind(this), 60, dir);
             else {
                 clearInterval(this.throwAnim);
-                this.throwAnim = setInterval(this.throwAnimation, 60, dir);
+                this.throwAnim = setInterval(this.throwAnimation.bind(this), 60, dir);
             }
             console.log("Throw: " + v_x + ", " + v_y);
 
@@ -505,17 +513,19 @@
 
     pause_game() {
         this.isPaused = true;
-        this.projectiles.forEach((body, index) => {
+        for (var id in this.projectiles) {
+            var body = this.projectiles[id];
             body.isStatic = true;
-        })
+        }
         this.player.isStatic = true;
     }
 
     unpause_game() {
         this.isPaused = false;
-        this.projectiles.forEach((body, index) => {
+        for (var id in this.projectiles) {
+            var body = this.projectiles[id];
             body.isStatic = false;
-        })
+        }
         this.player.isStatic = false;
     }
 }
