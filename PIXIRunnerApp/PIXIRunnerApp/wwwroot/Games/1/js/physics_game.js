@@ -24,6 +24,8 @@
     max_velocity = 2;
     num_rocks = 10;
     projectiles = {};
+    chests = {};
+    signs = {};
     projectileGravity = false;
     grounded = true;
     inv_open = false;
@@ -39,9 +41,12 @@
     enemy_proj = 0x0020;
     ladderFilter = 0x0040;
     groundFilter = 0x0080;
+    chestFilter = 0x0100;
+    signFilter = 0x0200;
 
     nearLadder = false;
     climbing = false;
+    interact = false;
     climbAnimStep = 0;
 
     game_width = 2000;
@@ -54,12 +59,15 @@
     screenXMax = 1000;
     
     Bounds = Matter.Bounds;
+    gold;
 
     onLoad(load) {
         this.lives = load.lives;
         this.checkpoint = load.checkpoint;
         this.character = load.character;
+        this.gold = 100;
         document.getElementById("lives").innerHTML = load.lives;
+        document.getElementById("gold").innerHTML = this.gold;
     }
 
     preInit() {
@@ -118,6 +126,8 @@
 
 
     createWorld() {
+        this.generate_chests();
+        this.generate_signs();
         // add bodies
         this.World.add(this.world, [
             this.Bodies.rectangle(125, 625, 40, 300, {
@@ -145,8 +155,73 @@
             this.Bodies.polygon(700, 760, 3, 30, { label: "deathTriangle", isStatic: true, angle: 1.5708, render: { fillStyle: "#2d9919" }, collisionFilter: { category: this.deathFilter } }), //death triangles
             this.Bodies.rectangle(65, 550, 80, 50, { label: "ground", isStatic: true, render: { fillStyle: "#2d9919" }, collisionFilter: { category: this.groundFilter } }),
             this.Bodies.rectangle(185, 550, 80, 50, { label: "ground", isStatic: true, render: { fillStyle: "#2d9919" }, collisionFilter: { category: this.groundFilter } }),
-            this.player
+            
         ]);
+        for (var id in this.chests) {
+            this.World.add(this.world, this.chests[id].body);
+        }
+
+        for (var id in this.signs) {
+            this.World.add(this.world, this.signs[id].body);
+        }
+
+        this.World.add(this.world, this.player);
+    }
+
+    generate_signs() {
+        var sign1 = this.Bodies.rectangle(800, 755, 50, 50, {
+            label: "sign1",
+            isStatic: true,
+            isSensor: true,
+            collisionFilter: {
+                category: this.signFilter
+            },
+            render: {
+                fillStyle: "#7a0a85",
+                sprite: {
+                    texture: '/Games/1/images/sign.png',
+                    xScale: 2,
+                    yScale: 2
+                }
+            }
+        });
+        var text1 = "Hello Welcome to the game!";
+
+        this.signs[sign1.id] = {
+            body: sign1,
+            text: text1
+        };
+    }
+
+    generate_chests() {
+
+        var chest1 = this.Bodies.rectangle(900, 750, 50, 50, {
+            label: "chest1",
+            isStatic: true,
+            isSensor: true,
+            collisionFilter: {
+                category: this.chestFilter
+            },
+            render: {
+                fillStyle: "#7a0a85",
+                sprite: {
+                    texture: '/Games/1/images/chest_closed.png',
+                    xScale: 3,
+                    yScale: 3
+                }
+            }
+        });
+
+        var inventory1 = [{
+            type: "gold",
+            count: 20
+        }];
+        
+        this.chests[chest1.id] = {
+            body: chest1,
+            isOpen: false,
+            inventory: inventory1
+        };
     }
  
     physicsEvents() {
@@ -197,7 +272,7 @@
 
             for (var i = 0, j = pairs.length; i != j; ++i) {
                 var pair = pairs[i];
-                console.log("collisionSTART: (" + pair.bodyA.label + ", " + pair.bodyB.label + ")");
+                //console.log("collisionSTART: (" + pair.bodyA.label + ", " + pair.bodyB.label + ")");
                 //player collisions
                 if (pair.bodyA.label === "player" || pair.bodyB.label === "player") {
                     //mark player as grounded
@@ -209,10 +284,19 @@
                         this.respawn();
                     //near ladder.
                     if (pair.bodyB.collisionFilter.category === this.ladderFilter || pair.bodyA.collisionFilter.category === this.ladderFilter) {
-                        console.log("near ladder");
+                        //console.log("near ladder");
                         this.nearLadder = true;
 
                     }
+
+                    //sign
+                    if (pair.bodyB.collisionFilter.category === this.signFilter) {
+                        this.show_sign(pair.bodyB.id);
+                    } else if (pair.bodyA.collisionFilter.category === this.signFilter) {
+                        this.show_sign(pair.bodyA.id);
+                    }
+                    
+
                 }
                 if (pair.bodyA.label === "player_proj" || pair.bodyB.label === "player_proj") {
 
@@ -226,12 +310,36 @@
             }
         }.bind(this));
 
+        this.Events.on(this.engine, "collisionActive", function (event) {
+            var pairs = event.pairs;
+            for (var i = 0, j = pairs.length; i != j; ++i) {
+                var pair = pairs[i];
+                //console.log("collisionACTIVE: (" + pair.bodyA.label + ", " + pair.bodyB.label + ")");
+                //player collisions
+                if (pair.bodyA.label === "player" || pair.bodyB.label === "player") {
+                    //nearChest
+                    //console.log("chestFilter: " + this.chestFilter + " === " + pair.bodyA.collisionFilter.category)
+                    //console.log("collides with chest?: " + (pair.bodyA.collisionFilter.category === this.chestFilter) ? true : false);
+                    if (pair.bodyB.collisionFilter.category === this.chestFilter) {
+                        //console.log("nearChest id:" + pair.bodyB.id + " interact: " + this.interact);
+                        if (this.interact && !this.chests[pair.bodyB.id].isOpen)
+                            this.open_chest(pair.bodyB.id);
+                    } else if (pair.bodyA.collisionFilter.category === this.chestFilter) {
+
+                        //console.log("nearChest id: " + pair.bodyA.id + " interact: " + this.interact)
+                        if (this.interact && !this.chests[pair.bodyA.id].isOpen)
+                            this.open_chest(pair.bodyA.id);
+                    }
+                }
+            }
+        }.bind(this));
+
         this.Events.on(this.engine, 'collisionEnd', function (event) {
             var pairs = event.pairs;
 
             for (var i = 0, j = pairs.length; i != j; ++i) {
                 var pair = pairs[i];
-                console.log("collisionEND: (" + pair.bodyA.label + ", " + pair.bodyB.label + ")");
+                //console.log("collisionEND: (" + pair.bodyA.label + ", " + pair.bodyB.label + ")");
                 //player collisions
                 if (pair.bodyA.label === "player" || pair.bodyB.label === "player") {
 
@@ -245,7 +353,11 @@
                         this.climbing = false;
                         this.climb = false;
                         this.climbAnimStep = 0;
-                        console.log("away from ladder");
+                        //console.log("away from ladder");
+                    }
+
+                    if (pair.bodyB.collisionFilter.category == this.signFilter || pair.bodyA.collisionFilter.category == this.signFilter) {
+                        this.toggle_sign();
                     }
                 }
             }
@@ -288,6 +400,10 @@
 
             if (event.code == 'KeyS') { //DOWN
                 down = true;
+            }
+
+            if (event.code == 'KeyE') { //interact
+                this.interact = true;
             }
 
 
@@ -355,6 +471,9 @@
             }
             if (event.code == 'KeyW') {
                 climb = false;
+            }
+            if (event.code == 'KeyE') {
+                this.interact = false;
             }
         }.bind(this));
 
@@ -484,7 +603,7 @@
             isStatic: false,
             inertia: Infinity, //Prevent rotation.
             collisionFilter: {
-                mask: this.groundFilter | this.deathFilter | this.powerupFilter | this.enemy_proj | this.ladderFilter | this.defaultFilter
+                mask: this.groundFilter | this.deathFilter | this.powerupFilter | this.enemy_proj | this.ladderFilter | this.defaultFilter | this.chestFilter | this.signFilter
             },
             render: {
                 //fillStyle: "#7a0a85",
@@ -533,5 +652,32 @@
             body.isStatic = false;
         }
         this.player.isStatic = false;
+    }
+
+    open_chest(id) {
+        
+        this.chests[id].body.render.sprite.texture = '/Games/1/images/chest_open.png';
+        this.chests[id].isOpen = true;
+        this.chests[id].inventory.forEach((value) => {
+            console.log("player recieves: type: " + value.type + " count: " + value.count);
+            switch (value.type) {
+                case "gold":
+                    this.gold += value.count;
+                    document.getElementById("gold").innerHTML = this.gold;
+                    break;
+                default:
+                    console.log("unknown type: '" + value.type + "'");
+                    break;
+            }
+        })
+    }
+
+    show_sign(id) {
+        $("#chat_panel_text").html(this.signs[id].text);
+        this.toggle_sign();
+    }
+
+    toggle_sign() {
+        $("#chat_panel").toggleClass('animate');
     }
 }
