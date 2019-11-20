@@ -27,6 +27,7 @@
     projectiles = {};
     chests = {};
     signs = {};
+    coins = {};
     projectileGravity = false;
     grounded = true;
     inv_open = false;
@@ -44,6 +45,7 @@
     groundFilter = 0x0080;
     chestFilter = 0x0100;
     signFilter = 0x0200;
+    coinFilter = 0x0400;
 
     nearLadder = false;
     climbing = false;
@@ -146,6 +148,7 @@
     createWorld() {
         this.generate_chests();
         this.generate_signs();
+        this.generate_coins();
         // add bodies
         this.World.add(this.world, [
             this.Bodies.rectangle(125, 625, 40, 300, {
@@ -181,6 +184,10 @@
 
         for (var id in this.signs) {
             this.World.add(this.world, this.signs[id].body);
+        }
+
+        for (var id in this.coins) {
+            this.World.add(this.world, this.coins[id].body);
         }
 
         this.World.add(this.world, this.player);
@@ -243,6 +250,36 @@
             isOpen: false,
             inventory: inventory1
         };
+    }
+
+    generate_coins() {
+
+        for (var i = 0; i < 10; i++) {
+            var coin = this.Bodies.rectangle(970 + (i * 50), 750, 50, 50, {
+                label: "coin1",
+                isStatic: true,
+                isSensor: true,
+                collisionFilter: {
+                    category: this.coinFilter
+                },
+                render: {
+                    fillStyle: "#7a0a85",
+                    sprite: {
+                        texture: '/Games/1/images/coins/Gold_0.png',
+                        xScale: 0.05,
+                        yScale: 0.05
+                    }
+                }
+            });
+
+            this.coins[coin.id] = {
+                body: coin,
+                count: 1,
+                animation_state: 0
+            };
+        }
+
+        
     }
  
     physicsEvents() {
@@ -313,6 +350,18 @@
                 }
             }
 
+            for (var id in this.coins) {
+                var coin = this.coins[id];
+                coin.animation_state++;
+
+                if (coin.animation_state > 45)
+                    coin.animation_state = 0;
+                if (coin.animation_state % 5 === 0) {
+                    coin.body.render.sprite.texture = '/Games/1/images/coins/Gold_' + coin.animation_state / 5 + '.png';
+                    //console.log("%d, %d",coin.animation_state, coin.animation_state / 5);
+                }
+            }
+
             if (this.climbing) {
                 this.Body.applyForce(this.player, this.player.position, {
                     x: -gravity.x * gravity.scale * this.player.mass,
@@ -365,6 +414,13 @@
                         this.show_sign(pair.bodyB.id);
                     } else if (pair.bodyA.collisionFilter.category === this.signFilter) {
                         this.show_sign(pair.bodyA.id);
+                    }
+
+                    //coin
+                    if (pair.bodyB.collisionFilter.category === this.coinFilter) {
+                        this.collect_coin(pair.bodyB.id)
+                    } else if (pair.bodyA.collisionFilter.category === this.coinFilter) {
+                        this.collect_coin(pair.bodyA.id);
                     }
                     
 
@@ -577,7 +633,7 @@
             this.player.render.sprite.texture = '/Games/1/images/Pink_Monster_L.png';
             if (Math.abs(this.player.velocity.x) <= this.max_velocity) {
                 if (!this.grounded)
-                    this.Body.applyForce(this.player, { x: this.player.position.x, y: this.player.position.y }, { x: -0.015, y: 0 })
+                    this.Body.applyForce(this.player, { x: this.player.position.x, y: this.player.position.y }, { x: -0.01, y: 0 })
                 else
                     this.Body.applyForce(this.player, { x: this.player.position.x, y: this.player.position.y }, { x: -0.02, y: 0 })
 
@@ -592,7 +648,7 @@
             this.player.render.sprite.texture = '/Games/1/images/Pink_Monster_R.png';
             if (Math.abs(this.player.velocity.x) <= this.max_velocity) {
                 if (!this.grounded)
-                    this.Body.applyForce(this.player, { x: this.player.position.x, y: this.player.position.y }, { x: 0.015, y: 0 })
+                    this.Body.applyForce(this.player, { x: this.player.position.x, y: this.player.position.y }, { x: 0.01, y: 0 })
                 else
                     this.Body.applyForce(this.player, { x: this.player.position.x, y: this.player.position.y }, { x: 0.02, y: 0 })
             }
@@ -630,7 +686,7 @@
             isStatic: false,
             inertia: Infinity, //Prevent rotation.
             collisionFilter: {
-                mask: this.groundFilter | this.deathFilter | this.powerupFilter | this.enemy_proj | this.ladderFilter | this.defaultFilter | this.chestFilter | this.signFilter
+                mask: this.groundFilter | this.deathFilter | this.powerupFilter | this.enemy_proj | this.ladderFilter | this.defaultFilter | this.chestFilter | this.signFilter | this.coinFilter
             },
             render: {
                 sprite: {
@@ -706,6 +762,13 @@
                     break;
             }
         })
+    }
+
+    collect_coin(id) {
+        this.gold += this.coins[id].count;
+        document.getElementById("gold").innerHTML = this.gold;
+        this.World.remove(this.world, this.coins[id].body);
+        delete this.coins[id];
     }
 
     show_sign(id) {
