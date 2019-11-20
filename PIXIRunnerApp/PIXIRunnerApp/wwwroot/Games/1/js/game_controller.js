@@ -1,4 +1,4 @@
-﻿import { PhysicsGame } from './physics_game.js';
+﻿import { PhysicsGame } from './pixelrunner.js';
 const game = new PhysicsGame();
 game.preInit();
 
