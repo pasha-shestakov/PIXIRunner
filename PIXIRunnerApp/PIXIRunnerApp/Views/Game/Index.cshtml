@@ -2,13 +2,14 @@
 @{
     ViewData["Title"] = Model.name;
     var saves = ViewData["saves"] as List<SaveState>;
-    
+
 }
 
 <h3>@Model.name</h3>
 <div id="@Model.gameID" class="cont">
+
     <canvas id="gameBody"></canvas>
-    <div class="canvas">
+    <div id="overlay">
         <div id="launcher">
             <button> New Game</button>
 
@@ -32,7 +33,7 @@
 
 
 @section Scripts
-{
+    {
     <script src="~/lib/matter-js/matter.min.js"></script>
     <script type="module" src="@("/Games/" + Model.gameID + "/js/game_controller.js")"></script>
 

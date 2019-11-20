@@ -30,6 +30,9 @@ $(document).ready(function () {
                 }
             });
 
+            //after clicking a button remove overlay
+            $('#overlay').css('display', 'none');
+
         })
     });
 

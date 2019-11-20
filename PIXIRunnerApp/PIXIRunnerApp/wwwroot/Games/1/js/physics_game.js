@@ -16,6 +16,7 @@
     Body = Matter.Body;
     Vector = Matter.Vector;
     Events = Matter.Events;
+    Bounds = Matter.Bounds;
     engine;
     world;
     render;
@@ -57,8 +58,10 @@
 
     screenXMin = 0;
     screenXMax = 1000;
-    
-    Bounds = Matter.Bounds;
+
+    mouseconstraint;
+    mouse;
+
     gold;
 
     onLoad(load) {
@@ -98,6 +101,21 @@
             min: { x: 0, y: 0 },
             max: { x: 1000, y: 800 }
         });
+
+
+        // add mouse control
+        var mouse = this.Mouse.create(canvas),
+            mouseConstraint = this.MouseConstraint.create(this.engine, {
+                mouse: mouse,
+                constraint: {
+                    stiffness: 0.2,
+                    render: {
+                        visible: false
+                    }
+                }
+            });
+        this.mouse = mouse;
+        this.mouseconstraint = mouseConstraint;
     }
 
     init() {
@@ -166,6 +184,9 @@
         }
 
         this.World.add(this.world, this.player);
+        //this.World.add(this.world, this.mouseconstraint);
+        // keep the mouse in sync with rendering
+        this.render.mouse = this.mouse;
     }
 
     generate_signs() {
@@ -229,6 +250,56 @@
         window.setInterval(this.updateStats.bind(this), 100, this.player);
 
         this.engine.world.gravity.y = 1;
+
+        this.Events.on(this.mouseconstraint, "mousedown", (event) => {
+
+            if (!this.climbing && !this.isPaused) {
+                var x_1 = event.mouse.mousedownPosition.x;
+                var y_1 = event.mouse.mousedownPosition.y;
+
+                var x_2 = this.player.position.x;
+                var y_2 = this.player.position.y;
+                console.log("click at world position: (%s,%s)\nplayer at world position: (%s,%s)", x_1, y_1, x_2, y_2);
+                var dir = 'R';
+                if (x_1 < x_2)
+                    dir = 'L';
+
+                var v_1 = this.Vector.create(x_1, y_1);
+                var v_2 = this.Vector.create(x_2, y_2);
+                var throwspeed = 0.0015;
+                var rock = this.Bodies.rectangle(x_2, y_2, 5, 5, {
+                    label: "player_proj",
+                    collisionFilter: {
+                        category: this.player_proj,
+                        mask: this.groundFilter | this.defaultFilter | this.deathFilter
+                    },
+                    isStatic: false,
+                    render: {
+                        //fillStyle: "#7a0a85",
+                        sprite: {
+                            texture: '/Games/1/images/Rock.png'
+                        }
+                    }
+                });
+                this.World.add(this.world, rock);
+                this.projectiles[rock.id] = rock;
+                var angle = this.Vector.angle(v_1, v_2);
+                console.log("angle between two points in degrees: %d", (180 * angle / Math.PI) % 360);
+                var v_x = -1 * (Math.cos(angle) * throwspeed);
+                var v_y = -1 * (Math.sin(angle) * throwspeed);
+                if (this.throwAnim === undefined)
+                    this.throwAnim = setInterval(this.throwAnimation.bind(this), 60, dir);
+                else {
+                    clearInterval(this.throwAnim);
+                    this.throwAnim = setInterval(this.throwAnimation.bind(this), 60, dir);
+                }
+                //console.log("Throw: " + v_x + ", " + v_y);
+
+                this.Body.applyForce(rock, { x: rock.position.x, y: rock.position.y }, { x: v_x, y: v_y })
+            }
+        }).bind(this);
+
+
         this.Events.on(this.engine, 'beforeUpdate', function () {
             var gravity = this.engine.world.gravity;
             //console.log(engine);
@@ -298,14 +369,11 @@
                     
 
                 }
-                if (pair.bodyA.label === "player_proj" || pair.bodyB.label === "player_proj") {
-
-                    //destroy projectiles upon hitting ground object
-                    if (pair.bodyB.collisionFilter.category === this.groundFilter || pair.bodyB.collisionFilter.category === this.defaultFilter) {
-                        this.removeProjectile(pair.bodyA);
-                    } else if (pair.bodyA.collisionFilter.category === this.groundFilter || pair.bodyA.collisionFilter.category === this.defaultFilter) {
-                        this.removeProjectile(pair.bodyB);
-                    }
+                //destroy projectiles based on mask.
+                if (pair.bodyA.label === "player_proj") {
+                    this.removeProjectile(pair.bodyA);
+                } else if (pair.bodyB.label === "player_proj") {
+                    this.removeProjectile(pair.bodyB);
                 }
             }
         }.bind(this));
@@ -383,28 +451,31 @@
                 }
             }
 
-            if (event.code == "Space") { //UP (i.e. jump)
-                up = true;
-            }
+            if (!this.isPaused) {
+                if (event.code == "Space") { //UP (i.e. jump)
+                    up = true;
+                }
 
-            if (event.code == 'KeyW') { //CLIMB
-                climb = true;
-            }
+                if (event.code == 'KeyW') { //CLIMB
+                    climb = true;
+                }
 
-            if (event.code == 'KeyA') { //LEFT
-                left = true;
-            }
-            if (event.code == 'KeyD') { //RIGHT
-                right = true;
-            }
+                if (event.code == 'KeyA') { //LEFT
+                    left = true;
+                }
+                if (event.code == 'KeyD') { //RIGHT
+                    right = true;
+                }
 
-            if (event.code == 'KeyS') { //DOWN
-                down = true;
-            }
+                if (event.code == 'KeyS') { //DOWN
+                    down = true;
+                }
 
-            if (event.code == 'KeyE') { //interact
-                this.interact = true;
+                if (event.code == 'KeyE') { //interact
+                    this.interact = true;
+                }
             }
+            
 
 
             //we can only jump if we are grounded and not climbing
@@ -452,75 +523,31 @@
 
         document.addEventListener('keyup', function (event) {
 
-
-            if (event.code == "Space") { //UP (i.e. jump)
-                up = false;
-            }
-            if (event.code == 'KeyA') { //LEFT
-                clearInterval(leftID);
-                leftID = null;
-                left = false;
-            }
-            if (event.code == 'KeyD') { //RIGHT
-                clearInterval(rightID);
-                rightID = null;
-                right = false;
-            }
-            if (event.code == 'KeyS') {
-                down = false;
-            }
-            if (event.code == 'KeyW') {
-                climb = false;
-            }
-            if (event.code == 'KeyE') {
-                this.interact = false;
-            }
-        }.bind(this));
-
-        
-        document.addEventListener("click", function (event) {
-
-
-            var x_1 = event.offsetX + this.render.bounds.min.x;
-            var y_1 = event.offsetY + this.render.bounds.min.y;
-
-            var x_2 = this.player.position.x;
-            var y_2 = this.player.position.y;
-
-            var dir = 'R';
-            if (x_1 < x_2)
-                dir = 'L';
-
-            var v_1 = this.Vector.create(x_1, y_1);
-            var v_2 = this.Vector.create(x_2, y_2);
-            var throwspeed = 0.0015;
-            var rock = this.Bodies.rectangle(x_2, y_2, 5, 5, {
-                label: "player_proj",
-                collisionFilter: {
-                    category: this.player_proj
-                },
-                isStatic: false,
-                render: {
-                    //fillStyle: "#7a0a85",
-                    sprite: {
-                        texture: '/Games/1/images/Rock.png'
-                    }
+            if (!this.isPaused) {
+                if (event.code == "Space") { //UP (i.e. jump)
+                    up = false;
                 }
-            });
-            this.World.add(this.world, rock);
-            this.projectiles[rock.id] = rock;
-            var angle = this.Vector.angle(v_1, v_2);
-            var v_x = -1 * (Math.cos(angle) * throwspeed);
-            var v_y = -1 * (Math.sin(angle) * throwspeed);
-            if (this.throwAnim === undefined)
-                this.throwAnim = setInterval(this.throwAnimation.bind(this), 60, dir);
-            else {
-                clearInterval(this.throwAnim);
-                this.throwAnim = setInterval(this.throwAnimation.bind(this), 60, dir);
+                if (event.code == 'KeyA') { //LEFT
+                    clearInterval(leftID);
+                    leftID = null;
+                    left = false;
+                }
+                if (event.code == 'KeyD') { //RIGHT
+                    clearInterval(rightID);
+                    rightID = null;
+                    right = false;
+                }
+                if (event.code == 'KeyS') {
+                    down = false;
+                }
+                if (event.code == 'KeyW') {
+                    climb = false;
+                }
+                if (event.code == 'KeyE') {
+                    this.interact = false;
+                }
             }
-            console.log("Throw: " + v_x + ", " + v_y);
-
-            this.Body.applyForce(rock, { x: rock.position.x, y: rock.position.y }, { x: v_x, y: v_y })
+            
         }.bind(this));
     }
 
@@ -542,7 +569,7 @@
 
 
         if (direction_type == "left") {
-            if (this.screenXMin > 10 && this.player.position.x - this.screenXMin < (this.screenX / 3)) {
+            if (this.screenXMin > 0 && this.player.position.x - this.screenXMin < (this.screenX / 3)) {
                 this.screenXMin -= 10;
                 this.screenXMax -= 10;
             }
@@ -606,14 +633,23 @@
                 mask: this.groundFilter | this.deathFilter | this.powerupFilter | this.enemy_proj | this.ladderFilter | this.defaultFilter | this.chestFilter | this.signFilter
             },
             render: {
-                //fillStyle: "#7a0a85",
                 sprite: {
                     texture: '/Games/1/images/Pink_Monster_R.png',
                     xScale: 2.3,
-                    yScale: 2.3
+                    yScale: 2.3,
+                    yOffset: 0.04
                 }
             }
-        })
+        });
+
+        /* //testing
+        this.World.add(this.world, this.Bodies.rectangle(50, 730, 35, 65, {
+            isStatic: true,
+            isSensor: true,
+            render: {
+                fillStyle: "#7a0a85"
+            }
+        }))*/
         return player;
     }
 
