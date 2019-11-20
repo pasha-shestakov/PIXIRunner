@@ -1,59 +1,49 @@
-﻿@model Game
+﻿@model IEnumerable<PIXIRunnerApp.Models.Game>
+
 @{
-    ViewData["Title"] = Model.name;
-    var saves = ViewData["saves"] as List<SaveState>;
-    
+    ViewData["Title"] = "Index";
 }
 
-<h3>@Model.name</h3>
-<div id="@Model.gameID" class="cont">
-    <canvas id="gameBody"></canvas>
-    <div class="canvas">
-        <div id="launcher">
-            <button> New Game</button>
+    <div class="contain">
+        @foreach (var item in Model)
+        {
+            <div class="game-card">
+                <img class="game-img" src="~/static/images/thumb2.png" />
+                <div class="game-content">
+                    <h6>@item.name</h6>
+                    <p class="game-dis">@item.discription</p>
+                </div>
+                <!-- Source: https://codepen.io/lukemeyrick/pen/qdxqwM/ -->
+                <div class="play-btn">
+                    <a href='/Game/GameView?id=@item.gameID' class='playBut'>
+                        <!-- Generator: Adobe Illustrator 19.0.0, SVG Export Plug-In  -->
+                        <svg version="1.1"
+                             xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:a="http://ns.adobe.com/AdobeSVGViewerExtensions/3.0/"
+                             x="0px" y="0px" width="48px" height="48px" viewBox="0 0 213.7 213.7" enable-background="new 0 0 213.7 213.7"
+                             xml:space="preserve">
+                        <polygon class='triangle' id="XMLID_18_" fill="none" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" points="
+	                73.5,62.5 148.5,105.8 73.5,149.1 " />
 
-            @if (saves != null)
-            {
-                @foreach (var save in saves)
-                {
-                    <button id="@save.saveStateID">Load Save @save.saveStateID</button>
-                }
-            }
-        </div>
-        <div class="player_info">
-            <span id="lives"></span>
-        </div>
-        <div class="information">
-            <h2>Player Physics Stats:</h2>
-            <ul>
-                <li id="position">
-                    Position: 0, 0
-                </li>
-                <li id="inertia">
-                    Inertia: 0
-                </li>
-                <li id="torque">
-                    Torque: 0
-                </li>
-                <li id="velocity">
-                    Velocity: 0, 0
-                </li>
-                <li id="angularSpeed">
-                    Angular Speed: 0
-                </li>
-                <li id="angularVelocity">
-                    Angular Velocity: 0
-                </li>
-            </ul>
-        </div>
+
+
+
+
+
+
+                        <circle class='circle' id="XMLID_17_" fill="none" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" cx="106.8" cy="106.8" r="103.3" />
+
+
+
+
+
+
+
+                </svg>
+                    </a>
+                </div>
+
+            </div>
+        }
     </div>
-</div>
 
 
-@section Scripts
-{
-    <script src="~/lib/matter-js/matter.min.js"></script>
-    <script type="module" src="@("/Games/" + Model.gameID + "/js/game_controller.js")"></script>
-
-
-}

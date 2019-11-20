@@ -10,5 +10,7 @@ namespace PIXIRunnerApp.Models
         public int gameID { get; set; }
 
         public string name { get; set; }
+
+        public string discription { get; set; }
     }
 }
