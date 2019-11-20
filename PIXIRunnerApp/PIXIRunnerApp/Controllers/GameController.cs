@@ -49,8 +49,14 @@ namespace PIXIRunnerApp.Controllers
             var savedState = _context.SaveState.Where(s => s.saveStateID == sId).FirstOrDefault();
             return new JsonResult(savedState);
         }
+
+        public IActionResult Index() {
+            var games = _context.Game.ToList();
+            return View(games);
+        }
+
             // GET: Games
-       public IActionResult Index(int? id)
+       public IActionResult GameView(int? id)
         {
             if (id == null)
             {
