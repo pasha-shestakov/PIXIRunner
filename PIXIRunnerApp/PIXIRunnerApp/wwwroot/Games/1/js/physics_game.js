@@ -25,6 +25,7 @@
     num_rocks = 10;
     projectiles = {};
     chests = {};
+    signs = {};
     projectileGravity = false;
     grounded = true;
     inv_open = false;
@@ -41,7 +42,8 @@
     ladderFilter = 0x0040;
     groundFilter = 0x0080;
     chestFilter = 0x0100;
-    
+    signFilter = 0x0200;
+
     nearLadder = false;
     climbing = false;
     interact = false;
@@ -125,7 +127,7 @@
 
     createWorld() {
         this.generate_chests();
-        
+        this.generate_signs();
         // add bodies
         this.World.add(this.world, [
             this.Bodies.rectangle(125, 625, 40, 300, {
@@ -159,7 +161,36 @@
             this.World.add(this.world, this.chests[id].body);
         }
 
+        for (var id in this.signs) {
+            this.World.add(this.world, this.signs[id].body);
+        }
+
         this.World.add(this.world, this.player);
+    }
+
+    generate_signs() {
+        var sign1 = this.Bodies.rectangle(800, 755, 50, 50, {
+            label: "sign1",
+            isStatic: true,
+            isSensor: true,
+            collisionFilter: {
+                category: this.signFilter
+            },
+            render: {
+                fillStyle: "#7a0a85",
+                sprite: {
+                    texture: '/Games/1/images/sign.png',
+                    xScale: 2,
+                    yScale: 2
+                }
+            }
+        });
+        var text1 = "Hello Welcome to the game!";
+
+        this.signs[sign1.id] = {
+            body: sign1,
+            text: text1
+        };
     }
 
     generate_chests() {
@@ -191,8 +222,6 @@
             isOpen: false,
             inventory: inventory1
         };
-        console.log(this.chests);
-        console.log(this.chests[chest1.id]);
     }
  
     physicsEvents() {
@@ -259,6 +288,13 @@
                         this.nearLadder = true;
 
                     }
+
+                    //sign
+                    if (pair.bodyB.collisionFilter.category === this.signFilter) {
+                        this.show_sign(pair.bodyB.id);
+                    } else if (pair.bodyA.collisionFilter.category === this.signFilter) {
+                        this.show_sign(pair.bodyA.id);
+                    }
                     
 
                 }
@@ -291,7 +327,7 @@
                     } else if (pair.bodyA.collisionFilter.category === this.chestFilter) {
 
                         //console.log("nearChest id: " + pair.bodyA.id + " interact: " + this.interact)
-                        if (this.interact && !this.chests[pair.bodyB.id].isOpen)
+                        if (this.interact && !this.chests[pair.bodyA.id].isOpen)
                             this.open_chest(pair.bodyA.id);
                     }
                 }
@@ -318,6 +354,10 @@
                         this.climb = false;
                         this.climbAnimStep = 0;
                         //console.log("away from ladder");
+                    }
+
+                    if (pair.bodyB.collisionFilter.category == this.signFilter || pair.bodyA.collisionFilter.category == this.signFilter) {
+                        this.toggle_sign();
                     }
                 }
             }
@@ -563,7 +603,7 @@
             isStatic: false,
             inertia: Infinity, //Prevent rotation.
             collisionFilter: {
-                mask: this.groundFilter | this.deathFilter | this.powerupFilter | this.enemy_proj | this.ladderFilter | this.defaultFilter | this.chestFilter
+                mask: this.groundFilter | this.deathFilter | this.powerupFilter | this.enemy_proj | this.ladderFilter | this.defaultFilter | this.chestFilter | this.signFilter
             },
             render: {
                 //fillStyle: "#7a0a85",
@@ -615,6 +655,7 @@
     }
 
     open_chest(id) {
+        
         this.chests[id].body.render.sprite.texture = '/Games/1/images/chest_open.png';
         this.chests[id].isOpen = true;
         this.chests[id].inventory.forEach((value) => {
@@ -629,5 +670,14 @@
                     break;
             }
         })
+    }
+
+    show_sign(id) {
+        $("#chat_panel_text").html(this.signs[id].text);
+        this.toggle_sign();
+    }
+
+    toggle_sign() {
+        $("#chat_panel").toggleClass('animate');
     }
 }

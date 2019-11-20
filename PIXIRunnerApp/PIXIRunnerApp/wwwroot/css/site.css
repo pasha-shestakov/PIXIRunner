@@ -73,15 +73,30 @@ body {
     flex-direction: column;
 }
 
-.information {
+#chat_panel {
+    transform: scale(0,0);
     position: absolute;
-    top: 15px;
-    right: 15px;
-    opacity: 0.6;
+    top: 30px;
+    left: 55px;
+    width: 1010px;
+    height: 202px;
+    opacity: 0.8;
     z-index: 11;
     background: grey;
     padding: 10px;
-    visibility: hidden;
+    border: 5px white;
+    border-style: ridge;
+    transition: all 0.3s;
+}
+
+#chat_panel.animate {
+    transform: scale(1,1);
+}
+
+#chat_panel_text{
+    transition: none;
+    font-size:xx-large;
+    font-family: cursive;
 }
 
 .player_info {
