@@ -46,13 +46,14 @@
     chestFilter = 0x0100;
     signFilter = 0x0200;
     coinFilter = 0x0400;
+    wallFilter = 0x0800;
 
     nearLadder = false;
     climbing = false;
     interact = false;
     climbAnimStep = 0;
 
-    game_width = 2000;
+    game_width = 2031;
     game_height = 800;
 
     screenX = 1000;
@@ -127,7 +128,10 @@
 
         //prevents user from losing focus on gameBody
         $('#gameBody').blur(function (event) {
-            setTimeout(function () { $("#gameBody").focus(); }, 20);
+            setTimeout(function () {
+                alert("lost focus");
+                $("#gameBody").focus();
+            }, 20);
         });
 
         // create runner
@@ -149,6 +153,17 @@
         this.generate_chests();
         this.generate_signs();
         this.generate_coins();
+
+        //add background
+        this.generate_background();
+        //add floors
+        this.generate_floors();
+        //add ladders
+        //add chests
+        //add signs
+        //add coins
+        //add player
+
         // add bodies
         this.World.add(this.world, [
             this.Bodies.rectangle(125, 625, 40, 300, {
@@ -167,10 +182,8 @@
                     }
                 }
             }),
-            this.Bodies.rectangle(this.game_width / 2, this.game_height, this.game_width, 50, { label: "ground", isStatic: true, render: { fillStyle: "#afafaf" }, collisionFilter: { category: this.groundFilter } }), //ground
-            this.Bodies.rectangle(0, this.game_height / 2, 50, this.game_height, { label: "wall", frictionAir: 0, frictionStatic: 0, friction: 0, isStatic: true, render: { fillStyle: "#afafaf" } }), //left_wall
-            this.Bodies.rectangle(this.game_width, this.game_height / 2, 50, this.game_height, { label: "wall", frictionAir: 0, frictionStatic: 0, friction: 0, isStatic: true, render: { fillStyle: "#afafaf" } }), //right_wall
-            this.Bodies.rectangle(this.game_width / 2, 0, this.game_width, 50, { label: "wall", isStatic: true, render: { fillStyle: "#afafaf" } }), //roof
+            
+            this.Bodies.rectangle(this.game_width / 2, 0, this.game_width, 50, { label: "wall", isStatic: true, render: { fillStyle: "#afafaf" }, collisionFilter: { category: this.wallFilter } }), //roof
             this.Bodies.polygon(300, 760, 3, 30, { label: "deathTriangle", isStatic: true, angle: 1.5708, render: { fillStyle: "#2d9919" }, collisionFilter: { category: this.deathFilter } }), //death triangles{}}), //death triangles
             this.Bodies.polygon(500, 760, 3, 30, { label: "deathTriangle", isStatic: true, angle: 1.5708, render: { fillStyle: "#2d9919" }, collisionFilter: { category: this.deathFilter } }), //death triangles
             this.Bodies.polygon(700, 760, 3, 30, { label: "deathTriangle", isStatic: true, angle: 1.5708, render: { fillStyle: "#2d9919" }, collisionFilter: { category: this.deathFilter } }), //death triangles
@@ -195,7 +208,30 @@
         // keep the mouse in sync with rendering
         this.render.mouse = this.mouse;
     }
+    generate_background() {
+        this.World.add(this.world, this.Bodies.rectangle(108, 657, 171, 232, { label: "background", isStatic: true, isSensor: true, render: { sprite: { texture: '/Games/1/images/bg/bg_0.png', xScale: 1, yScale: 1 } } }));
 
+        for (var i = 1; i < 12; i++) {
+            var random_bg = Math.floor(Math.random() * 3);
+            //171 x 232
+            this.World.add(this.world, this.Bodies.rectangle(108+(i*171), 657, 171, 232, { label: "background", isStatic: true, isSensor: true, render: { sprite: { texture: '/Games/1/images/bg/bg_' + random_bg + '.png', xScale: 1, yScale: 1 } } }));
+                
+        }
+        this.World.add(this.world, this.Bodies.rectangle(1989, 657, 171, 232, { label: "background", isStatic: true, isSensor: true, render: { sprite: { texture: '/Games/1/images/bg/bg_0.png', xScale: 1, yScale: 1 } } }));
+
+    }
+
+    generate_floors() {
+        this.World.add(this.world,
+            [
+                this.Bodies.rectangle(0, this.game_height / 2, 46, this.game_height, { label: "wall", friction: 0, isStatic: true, render: { sprite: { texture: '/Games/1/images/world/left_wall.png', xScale: 1, yScale: 1 } }, collisionFilter: { category: this.wallFilter } }), //left_wall
+                this.Bodies.rectangle(this.game_width, this.game_height / 2, 46, this.game_height, { label: "wall", friction: 0, isStatic: true, render: { sprite: { texture: '/Games/1/images/world/right_wall.png', xScale: 1, yScale: 1 } }, collisionFilter: { category: this.wallFilter } }), //right_wall
+                this.Bodies.rectangle(this.game_width / 2, this.game_height - 10, this.game_width, 33, { label: "ground", isStatic: true, render: { sprite: { texture: '/Games/1/images/world/floor.png', xScale: 1, yScale: 1 } }, collisionFilter: { category: this.groundFilter } }), //ground
+               
+            ]);
+
+        
+    }
     generate_signs() {
         var sign1 = this.Bodies.rectangle(800, 755, 50, 50, {
             label: "sign1",
@@ -219,6 +255,7 @@
             body: sign1,
             text: text1
         };
+        
     }
 
     generate_chests() {
@@ -308,7 +345,7 @@
                     label: "player_proj",
                     collisionFilter: {
                         category: this.player_proj,
-                        mask: this.groundFilter | this.defaultFilter | this.deathFilter
+                        mask: this.groundFilter | this.wallFilter | this.deathFilter
                     },
                     isStatic: false,
                     render: {
@@ -396,8 +433,13 @@
                 //player collisions
                 if (pair.bodyA.label === "player" || pair.bodyB.label === "player") {
                     //mark player as grounded
-                    if (pair.bodyB.collisionFilter.category === this.groundFilter || pair.bodyA.collisionFilter.category === this.groundFilter)
+                    console.log("collision: (%s, %s):", pair.bodyA.label, pair.bodyB.label);
+                    if (pair.bodyB.collisionFilter.category === this.groundFilter || pair.bodyA.collisionFilter.category === this.groundFilter) {
+
+                        this.player.friction = 0.1;
                         this.grounded = true;
+
+                    }
 
                     //respawn player when they hit an obstacle.
                     if (pair.bodyB.collisionFilter.category === this.deathFilter || pair.bodyA.collisionFilter.category === this.deathFilter)
@@ -468,8 +510,10 @@
                 if (pair.bodyA.label === "player" || pair.bodyB.label === "player") {
 
                     //we are no longer on the ground.
-                    if (pair.bodyB.label === 'ground' || pair.bodyA.label === 'ground')
+                    if (pair.bodyA.collisionFilter.category == this.groundFilter || pair.bodyB.collisionFilter.category == this.groundFilter) {
                         this.grounded = false;
+                        this.player.friction = 0;
+                    }
 
                     //away from ladder.
                     if (pair.bodyB.collisionFilter.category == this.ladderFilter || pair.bodyA.collisionFilter.category == this.ladderFilter) {
@@ -640,7 +684,7 @@
             }
         }
         else if (direction_type == "right") {
-            if (this.screenXMax < 2000 && this.player.position.x - this.screenXMin > ((2 * this.screenX) / 3)) {
+            if (this.screenXMax < this.game_width && this.player.position.x - this.screenXMin > ((2 * this.screenX) / 3)) {
                 this.screenXMin += 10;
                 this.screenXMax += 10;
             }
@@ -686,7 +730,7 @@
             isStatic: false,
             inertia: Infinity, //Prevent rotation.
             collisionFilter: {
-                mask: this.groundFilter | this.deathFilter | this.powerupFilter | this.enemy_proj | this.ladderFilter | this.defaultFilter | this.chestFilter | this.signFilter | this.coinFilter
+                mask: this.groundFilter | this.deathFilter | this.powerupFilter | this.enemy_proj | this.ladderFilter | this.wallFilter | this.chestFilter | this.signFilter | this.coinFilter
             },
             render: {
                 sprite: {
