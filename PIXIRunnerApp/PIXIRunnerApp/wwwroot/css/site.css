@@ -209,3 +209,8 @@ body {
   .playBut:hover .circle, .play-btn:hover .circle {
     stroke-dashoffset: 0;
     opacity: 1; }
+
+@font-face {
+    font-family: 'Autobus';
+    src: url('../fonts/Autobus-Bold.ttf');
+}

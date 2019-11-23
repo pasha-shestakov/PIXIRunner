@@ -97,8 +97,9 @@ export class PhysicsGame  {
 
     mouseconstraint;
     mouse;
-
     
+    messageText;
+    text_window;
     logging = false;
 
     //shop overlay globals
@@ -109,8 +110,6 @@ export class PhysicsGame  {
         this.checkpoint = load.checkpoint;
         this.character = load.character;
         this.gold = 100;
-        document.getElementById("lives").innerHTML = load.lives;
-        document.getElementById("gold").innerHTML = this.gold;
     }
 
     preInit() {
@@ -523,12 +522,25 @@ export class PhysicsGame  {
                 }
             }
         });
-        var text1 = "Hello Welcome to the game!";
+        var text1 = "This is a chest, you can open it by pressing 'E' Maybe something cool is inside. Go ahead!";
 
         this.signs[sign1.id] = {
             body: sign1,
             text: text1
         };
+
+        this.text_window = this.Bodies.rectangle(this.screenX / 2, 210, this.screenX - 200, 200,
+            {
+                isStatic: true,
+                render: {
+                    fillStyle: '#545454',
+                    strokeStyle: '#fff',
+                    lineWidth: 5,
+                    opacity: 0.4,
+                    visible: false
+                }
+            });
+        this.World.add(this.overlayWorld, this.text_window);
         
     }
 
@@ -654,9 +666,14 @@ export class PhysicsGame  {
         this.Events.on(this.overlayEngine, 'beforeUpdate', function () {
             //update gold each frame.
             var ctx = this.overlayRender.context;
-            ctx.font = '48px serif';
+            ctx.font = '48px Autobus';
             ctx.fillStyle = '#ffffff';
-            ctx.fillText(this.gold, 60, 100);
+            ctx.fillText(this.gold, 70, 100);
+
+            if (this.text_window.render.visible) {
+                ctx.font = '24px Autobus';
+                ctx.fillText(this.messageText, this.text_window.position.x - 380, this.text_window.position.y - 60);
+            }
         }.bind(this));
 
         this.Events.on(this.gameEngine, 'beforeUpdate', function () {
@@ -1049,9 +1066,8 @@ export class PhysicsGame  {
                         this.nearLadder = false;
                     
 
-                    if (pair.bodyB.collisionFilter.category == this.signFilter || pair.bodyA.collisionFilter.category == this.signFilter) {
-                        this.toggle_sign();
-                    }
+                    if (pair.bodyB.collisionFilter.category == this.signFilter || pair.bodyA.collisionFilter.category == this.signFilter)
+                        this.hide_sign();
                 }
             }
         }.bind(this));
@@ -1112,12 +1128,14 @@ export class PhysicsGame  {
                 if (event.code == 'KeyA') { //LEFT
                     this.player.movement.left = false;
                     this.player.animStep = 0;
-                    this.player.body.render.sprite.texture = '/Games/1/images/player/Pink_Monster_L.png';
+                    if (!this.climbing)
+                        this.player.body.render.sprite.texture = '/Games/1/images/player/Pink_Monster_L.png';
                 }
                 if (event.code == 'KeyD') { //RIGHT
                     this.player.movement.right = false;
                     this.player.animStep = 0;
-                    this.player.body.render.sprite.texture = '/Games/1/images/player/Pink_Monster_R.png';
+                    if (!this.climbing)
+                        this.player.body.render.sprite.texture = '/Games/1/images/player/Pink_Monster_R.png';
                 }
                 if (event.code == 'KeyS') {
                     this.player.movement.climbDown = false;
@@ -1142,7 +1160,6 @@ export class PhysicsGame  {
         $("#angularSpeed").html("Angular Speed: " + body.angularSpeed);
         $("#angularVelocity").html("Angular Velocity: " + body.angularVelocity);
 
-        $("#lives").html("Lives: " + this.lives);
         $("#checkpoint").html("Checkpoint: " + this.checkpoint);
         $("#character").html("Character: " + this.character);
     }
@@ -1432,12 +1449,14 @@ export class PhysicsGame  {
     }
 
     show_sign(id) {
-        $("#chat_panel_text").html(this.signs[id].text);
-        this.toggle_sign();
+        this.text_window.render.visible = true;
+
+        this.messageText = this.signs[id].text;
     }
 
-    toggle_sign() {
-        $("#chat_panel").toggleClass('animate');
+    hide_sign() {
+        this.text_window.render.visible = false;
+        
     }
 
     enemy_jump(id) {
