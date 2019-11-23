@@ -48,6 +48,8 @@
     ladders = {};
     coins = {};
     enemies = {};
+    grates = {};
+    falling_rocks = {};
 
     life_arr = [];
 
@@ -278,6 +280,8 @@
         this.generate_floors();
         //add ladders
         this.generate_ladders();
+        //add grates
+        this.generate_grates();
         //add chests
         //add signs
         //add coins
@@ -286,13 +290,18 @@
         // add bodies
         this.World.add(this.gameWorld, [
             this.Bodies.rectangle(this.game_width / 2, 0, this.game_width, 50, { label: "wall", isStatic: true, render: { fillStyle: "#afafaf" }, collisionFilter: { category: this.wallFilter } }), //roof
-            this.Bodies.polygon(300, 760, 3, 30, { label: "deathTriangle", isStatic: true, angle: 1.5708, render: { fillStyle: "#2d9919" }, collisionFilter: { category: this.deathFilter } }), //death triangles{}}), //death triangles
-            this.Bodies.polygon(500, 760, 3, 30, { label: "deathTriangle", isStatic: true, angle: 1.5708, render: { fillStyle: "#2d9919" }, collisionFilter: { category: this.deathFilter } }), //death triangles
-            this.Bodies.polygon(700, 760, 3, 30, { label: "deathTriangle", isStatic: true, angle: 1.5708, render: { fillStyle: "#2d9919" }, collisionFilter: { category: this.deathFilter } }), //death triangles
-            this.Bodies.rectangle(65, 550, 80, 50, { label: "ground", isStatic: true, render: { fillStyle: "#2d9919" }, collisionFilter: { category: this.groundFilter } }),
-            this.Bodies.rectangle(185, 550, 80, 50, { label: "ground", isStatic: true, render: { fillStyle: "#2d9919" }, collisionFilter: { category: this.groundFilter } }),
+            this.Bodies.polygon(300, 760, 3, 30, { label: "spike", isStatic: true, angle: 1.5708, render: { fillStyle: "#2d9919" }, collisionFilter: { category: this.deathFilter } }), //death triangles{}}), //death triangles
+            this.Bodies.polygon(500, 760, 3, 30, { label: "spike", isStatic: true, angle: 1.5708, render: { fillStyle: "#2d9919" }, collisionFilter: { category: this.deathFilter } }), //death triangles
+            this.Bodies.polygon(700, 760, 3, 30, { label: "spike", isStatic: true, angle: 1.5708, render: { fillStyle: "#2d9919" }, collisionFilter: { category: this.deathFilter } }), //death triangles
+            this.Bodies.rectangle(65, 516, 80, 17, { label: "ground", isStatic: true, render: { fillStyle: "#2d9919" }, collisionFilter: { category: this.groundFilter } }),
+            this.Bodies.rectangle(745, 516, 1200, 17, { label: "ground", isStatic: true, render: { fillStyle: "#2d9919" }, collisionFilter: { category: this.groundFilter } }),
+
             
         ]);
+        for (var id in this.grates) {
+            this.World.add(this.gameWorld, this.grates[id].body);
+        }
+
         for (var id in this.ladders) {
             this.World.add(this.gameWorld, this.ladders[id].body);
         }
@@ -316,6 +325,31 @@
         // keep the mouse in sync with rendering
         this.overlayRender.mouse = this.mouse;
     }
+
+    generate_grates() {
+        //grates
+        var grate1 = this.Bodies.rectangle(1313, 542, 64, 33,
+            {
+                label: "grate",
+                isStatic: true,
+                render: {
+                    fillStyle: "#ff0000",
+                    sprite: {
+                        texture: '/Games/1/images/world/grate0.png'
+                    }
+                }, collisionFilter: { category: this.wallFilter }
+            })
+
+        this.grates[grate1.id] = {
+            body: grate1,
+            animMax: 4,
+            animRate: 10,
+            animStep: 0,
+            opening: true,
+            active: true
+        }
+    }
+
     generate_ladders() {
         var ladder1 = this.Bodies.rectangle(125, 625, 5, 300, {
             label: "ladder1",
@@ -659,19 +693,60 @@
 
                     
                 }
-            }
 
-            for (var id in this.coins) {
-                var coin = this.coins[id];
-                coin.animation_state++;
 
-                if (coin.animation_state > 45)
-                    coin.animation_state = 0;
-                if (coin.animation_state % 5 === 0) {
-                    coin.body.render.sprite.texture = '/Games/1/images/coins/Gold_' + coin.animation_state / 5 + '.png';
-                    //this.log("%d, %d",coin.animation_state, coin.animation_state / 5);
+                for (var id in this.coins) {
+                    var coin = this.coins[id];
+                    coin.animation_state++;
+
+                    if (coin.animation_state > 45)
+                        coin.animation_state = 0;
+                    if (coin.animation_state % 5 === 0) {
+                        coin.body.render.sprite.texture = '/Games/1/images/coins/Gold_' + coin.animation_state / 5 + '.png';
+                    }
+                }
+
+                for (var id in this.grates) {
+                    var grate = this.grates[id];
+                    if (grate.opening)
+                        grate.animStep++;
+                    else
+                        grate.animStep--;
+
+                    if (grate.animStep == grate.animRate * grate.animMax) {
+                        grate.opening = false;
+                        this.spawn_falling_rock(grate.body.position.x, grate.body.position.y);
+
+                    }
+                    else if (grate.animStep == 0) {
+                        grate.opening = true;
+                    }
+                    if (grate.animStep % grate.animRate === 0) {
+                        grate.body.render.sprite.texture = '/Games/1/images/world/grate' + grate.animStep / grate.animRate + '.png';
+                    }
+                }
+
+                for (var id in this.falling_rocks) {
+                    var f_rock = this.falling_rocks[id];
+                    if (f_rock.death) {
+                        
+
+                        if (f_rock.animStep % f_rock.animRate === 0) {
+                            f_rock.body.render.sprite.texture = '/Games/1/images/world/rock_crumble' + f_rock.animStep / f_rock.animRate + '.png';
+                        }
+                        if (f_rock.animStep == f_rock.animRate * f_rock.animMax) {
+                            this.World.remove(this.gameWorld, f_rock.body);
+                            delete this.falling_rocks[f_rock.body.id];
+
+                        }
+                        f_rock.animStep++;
+
+
+                    }
                 }
             }
+
+            
 
             for (var id in this.enemies) {
                 let enemyBody = this.enemies[id].body;
@@ -722,6 +797,19 @@
                 var pair = pairs[i];
                 //this.log("collisionSTART: (" + pair.bodyA.label + ", " + pair.bodyB.label + ")");
 
+
+                //falling rock destroy animation.
+                if (pair.bodyA.collisionFilter.category == this.groundFilter || pair.bodyB.collisionFilter.category == this.groundFilter) {
+
+                    if (pair.bodyA.label === 'falling_rock') {
+                        this.falling_rocks[pair.bodyA.id].death = true;
+                        pair.bodyA.collisionFilter.mask = this.groundFilter;
+                    } else if (pair.bodyB.label === 'falling_rock') {
+                        this.falling_rocks[pair.bodyB.id].death = true;
+                        pair.bodyB.collisionFilter.mask = this.groundFilter;
+                    }
+                }
+
                 //player collisions
                 if (pair.bodyB.collisionFilter.category === this.playerFilter || pair.bodyA.collisionFilter.category === this.playerFilter) {
                     //mark player as grounded
@@ -734,8 +822,15 @@
                     }
 
                     //respawn player when they hit an obstacle.
-                    if (pair.bodyB.collisionFilter.category === this.deathFilter || pair.bodyA.collisionFilter.category === this.deathFilter)
-                        this.hurt_player();
+                    if (pair.bodyB.collisionFilter.category === this.deathFilter) {
+                        if ((pair.bodyB.label === 'falling_rock' && !this.falling_rocks[pair.bodyB.id].death) || pair.bodyB.label === 'spike')
+                            this.hurt_player();
+
+                    } else if (pair.bodyA.collisionFilter.category === this.deathFilter) {
+                        if ((pair.bodyA.label === 'falling_rock' && !this.falling_rocks[pair.bodyA.id].death) || pair.bodyA.label === 'spike')
+                            this.hurt_player();
+
+                    }
 
                     //near ladder.
                     if (pair.bodyB.collisionFilter.category === this.ladderFilter) {
@@ -770,7 +865,7 @@
 
                     //hit death.
                     if (pair.bodyB.collisionFilter.category === this.deathFilter || pair.bodyA.collisionFilter.category === this.deathFilter)
-                        this.log("enemy hit death triangle.");
+                        this.log("enemy hit death zone.");
                 }
                 //destroy projectiles based on mask.
                 if (pair.bodyA.collisionFilter.category === this.player_proj) {
@@ -837,6 +932,9 @@
             for (var i = 0, j = pairs.length; i != j; ++i) {
                 var pair = pairs[i];
                 this.log("collisionEND: (" + pair.bodyA.label + ", " + pair.bodyB.label + ")");
+                
+
+
                 //player collisions
                 if (pair.bodyA.collisionFilter.category === this.playerFilter || pair.bodyB.collisionFilter.category === this.playerFilter) {
                     
@@ -1151,6 +1249,35 @@
         return player;
     }
 
+    spawn_falling_rock(x, y) {
+        var falling_rock = this.Bodies.rectangle(x, y + 5, 40, 30, {
+            label: "falling_rock",
+            isStatic: false,
+            inertia: Infinity, //Prevent rotation.
+            collisionFilter: {
+                category: this.deathFilter,
+                mask: this.groundFilter | this.playerFilter | this.enemyFilter
+            },
+            render: {
+                sprite: {
+                    texture: '/Games/1/images/world/rock_falling.png',
+                    xScale: 1,
+                    yScale: 1
+                }
+            }
+        });
+
+        this.falling_rocks[falling_rock.id] = {
+            body: falling_rock,
+            animStep: 0,
+            animMax: 3,
+            animRate: 5,
+            death: false
+        }
+
+        this.World.add(this.gameWorld, falling_rock);
+    }
+
 
     throwAnimation(dir) {
         this.player.body.render.sprite.texture = '/Games/1/images/player/Throw_' + dir + '_' + this.throwAnimStep + '.png';
@@ -1183,6 +1310,10 @@
             var body = this.projectiles[id];
             body.isStatic = true;
         }
+        for (var id in this.falling_rocks) {
+            var body = this.falling_rocks[id].body;
+            body.isStatic = true;
+        }
         if (!this.climbing)
             this.player.body.isStatic = true;
     }
@@ -1191,6 +1322,10 @@
         this.isPaused = false;
         for (var id in this.projectiles) {
             var body = this.projectiles[id];
+            body.isStatic = false;
+        }
+        for (var id in this.falling_rocks) {
+            var body = this.falling_rocks[id].body;
             body.isStatic = false;
         }
         if (!this.climbing)
