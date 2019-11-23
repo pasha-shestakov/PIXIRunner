@@ -12,7 +12,7 @@
         <canvas id="gameBody"></canvas>
     </div>
     <div id="storeOverlay">
-        <input id="storeButton" type="image" src="~/Games/1/images/UI/shop.png"/>
+        <input id="storeButton" type="image" src="~/Games/1/images/UI/shop.png" />
         <h1>Here's the store overlay. Lol.</h1>
     </div>
 
@@ -42,6 +42,8 @@
 @section Scripts
     {
     <script src="~/lib/matter-js/matter.min.js"></script>
+
+    <script type="module" src="@("/Games/" + Model.gameID + "/js/gameSounds.js")"></script>
     <script type="module" src="@("/Games/" + Model.gameID + "/js/game_controller.js")"></script>
 
 

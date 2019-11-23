@@ -7,3 +7,10 @@ Assets:
 			https://stackoverflow.com/questions/22686917/matter-js-change-colors/54617580
 			https://brm.io/matter-js/docs/
 			https://github.com/liabru/matter-js/issues/104
+
+		Sounds:
+			https://freesound.org/people/bradwesson/sounds/135936/
+			https://freesound.org/people/SoundCollectah/sounds/157804/
+			https://freesound.org/people/Mixedupmoviestuff/sounds/179222/
+			https://freesound.org/people/denao270/sounds/346373/
+			https://downloads.khinsider.com/game-soundtracks/album/remixed-pixel-dungeon-android-game-music

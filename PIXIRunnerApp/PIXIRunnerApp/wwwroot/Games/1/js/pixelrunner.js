@@ -1,6 +1,12 @@
-﻿export class PhysicsGame  {
-    constructor() { }
+﻿
 
+export class PhysicsGame  {
+    sounds;
+    constructor(gameSounds) {
+        this.sounds = gameSounds;
+    }
+    
+    
     //db globals
     lives;
     checkpoint;
@@ -189,6 +195,8 @@
             }, 20);
         });
         */
+        //start bg music
+        this.sounds.start_bg_music(0);
 
         window.oncontextmenu = function () {
             this.clearAllPlayerIntervals();
@@ -626,7 +634,8 @@
                 }
                 //this.log("Throw: " + v_x + ", " + v_y);
 
-                this.Body.applyForce(rock, { x: rock.position.x, y: rock.position.y }, { x: v_x, y: v_y })
+                this.Body.applyForce(rock, { x: rock.position.x, y: rock.position.y }, { x: v_x, y: v_y });
+                this.sounds.rock_throw();
                 this.log("throwing projectile id=%d", rock.id);
             }
         }).bind(this);
@@ -803,9 +812,11 @@
 
                     if (pair.bodyA.label === 'falling_rock') {
                         this.falling_rocks[pair.bodyA.id].death = true;
+                        this.sounds.rock_hit();
                         pair.bodyA.collisionFilter.mask = this.groundFilter;
                     } else if (pair.bodyB.label === 'falling_rock') {
                         this.falling_rocks[pair.bodyB.id].death = true;
+                        this.sounds.rock_hit();
                         pair.bodyB.collisionFilter.mask = this.groundFilter;
                     }
                 }
@@ -1352,6 +1363,7 @@
 
     collect_coin(id) {
         this.gold += this.coins[id].count;
+        this.sounds.coin();
         document.getElementById("gold").innerHTML = this.gold;
         this.World.remove(this.gameWorld, this.coins[id].body);
         delete this.coins[id];

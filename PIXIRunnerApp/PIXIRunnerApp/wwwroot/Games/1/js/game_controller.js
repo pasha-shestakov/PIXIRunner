@@ -1,5 +1,6 @@
 ﻿import { PhysicsGame } from './pixelrunner.js';
-const game = new PhysicsGame();
+import GameSounds from './gameSounds.js'
+const game = new PhysicsGame(new GameSounds());
 game.preInit();
 
 $(document).ready(function () {
