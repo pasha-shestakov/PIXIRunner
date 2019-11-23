@@ -15,7 +15,7 @@
 
   <ItemGroup>
     <None Include="compilerconfig.json" />
-    <None Include="wwwroot\Games\1\images\Pink_Monster_R.png" />
+    <None Include="wwwroot\Games\1\images\player\Pink_Monster_R.png" />
   </ItemGroup>
 
 
