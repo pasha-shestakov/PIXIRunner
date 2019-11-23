@@ -77,7 +77,7 @@
     mouse;
 
     gold;
-    logging = false;
+    logging = true;
 
     onLoad(load) {
         this.lives = load.lives;
@@ -259,9 +259,11 @@
             }
         });
 
+        var hb_x = enemy1.position.x;
+        var hb_y = enemy1.position.y + 50;
         //var enemyID = setInterval(this.enemy_jump.bind(this), 1000, enemy1.id);
-        var enemy1HealthBar = this.Bodies.rectangle(enemy1.position.x, enemy1.position.y + 50, 80, 20, {
-            label: "healthbar",
+        var greenBar = this.Bodies.rectangle(hb_x, hb_y, 80, 20, {
+            label: "healthbar_green",
             isStatic: false,
             isSensor: true,
             inertia: Infinity,
@@ -271,8 +273,24 @@
                 lineWidth: 3
 
             }
+        });
+        
+        var redBar = this.Bodies.rectangle(hb_x, hb_y, 80, 20, {
+            label: "healthbar_red",
+            isStatic: false,
+            isSensor: true,
+            inertia: Infinity,
+            render: {
+                fillStyle: "#ff0000",
+                strokeStyle: "#000",
+                lineWidth: 3
+            }
         })
-
+        
+        var enemy1HealthBar = this.Body.create({
+            parts: [redBar, greenBar]
+        });
+        
         var constraint1 = this.Constraint.create({
             bodyA: enemy1,
             bodyB: enemy1HealthBar,
@@ -295,7 +313,10 @@
             forceNeeded: false,
             forceToApply: null,
             hb: enemy1HealthBar,
-            health: 6
+            hp: {
+                max: 6,
+                current: 6
+            }
         }
 
         this.World.add(this.world,
@@ -601,7 +622,7 @@
                 //player collisions
                 if (pair.bodyB.collisionFilter.category === this.playerFilter || pair.bodyA.collisionFilter.category === this.playerFilter) {
                     //mark player as grounded
-                    this.log("collision: (%s, %s):", pair.bodyA.label, pair.bodyB.label);
+                    this.log("collisionStart: (%s, %s):", pair.bodyA.label, pair.bodyB.label);
                     if (pair.bodyB.collisionFilter.category === this.groundFilter || pair.bodyA.collisionFilter.category === this.groundFilter) {
 
                         this.player.body.friction = 0.1;
@@ -661,7 +682,8 @@
                             this.enemies[pair.bodyB.id].forceToApply = { x: 0.04, y: 0 };
                         else
                             this.enemies[pair.bodyB.id].forceToApply = { x: -0.04, y: 0 };
-                        //this.Body.applyForce(pair.bodyB, { x: pair.bodyB.position.x, y: pair.bodyB.position.y }, { x: 0, y: -0.5 });
+
+                        this.hurt_enemy(this.enemies[pair.bodyB.id]);
                     }
                     this.removeProjectile(pair.bodyA);
                 } else if (pair.bodyB.collisionFilter.category === this.player_proj) {
@@ -676,7 +698,8 @@
                             this.enemies[pair.bodyA.id].forceToApply = { x: 0.04, y: 0 };
                         else
                             this.enemies[pair.bodyA.id].forceToApply = { x: -0.04, y: 0 };
-                        //this.Body.applyForce(pair.bodyA, { x: pair.bodyA.position.x, y: pair.bodyA.position.y }, { x: 0, y: -0.5 });
+
+                        this.hurt_enemy(this.enemies[pair.bodyA.id]);
                     }
                     this.removeProjectile(pair.bodyB);
                 }
@@ -713,7 +736,7 @@
                 this.log("collisionEND: (" + pair.bodyA.label + ", " + pair.bodyB.label + ")");
                 //player collisions
                 if (pair.bodyA.collisionFilter.category === this.playerFilter || pair.bodyB.collisionFilter.category === this.playerFilter) {
-
+                    
                     //we are no longer on the ground.
                     if (pair.bodyA.collisionFilter.category == this.groundFilter || pair.bodyB.collisionFilter.category == this.groundFilter) {
                         this.grounded = false;
@@ -759,7 +782,8 @@
 
 
                         }
-                    }
+                    } else
+                        this.nearLadder = false;
                     
 
                     if (pair.bodyB.collisionFilter.category == this.signFilter || pair.bodyA.collisionFilter.category == this.signFilter) {
@@ -814,49 +838,6 @@
                     this.interact = true;
                 }
             }
-            
-
-
-            /* we can only jump if we are grounded and not climbing
-            if (up && this.grounded && !this.climbing) {
-                this.move_player("up");
-            }
-
-            if (left && !this.climbing && this.leftID == null) {
-                //start movement on another thread until that key is released.
-               // this.leftID = setInterval(this.move_player.bind(this), 30, "left");
-            }
-            if (right && !this.climbing && this.rightID == null) {
-               // this.rightID = setInterval(this.move_player.bind(this), 30, "right");
-            }
-
-            //climbing
-            //if (this.nearLadder) {
-            //    if (climb || this.climbing) {
-            //        this.player.body.velocity.x = 0;
-            //        this.player.body.velocity.y = 0;
-            //        if (this.climbAnimStep % 5 == 0) {
-            //            this.player.body.render.sprite.texture = '/Games/1/images/player/climbAnimStep' + Math.floor(this.climbAnimStep / 5) + '.png';
-            //        }
-            //        this.climbAnimStep++;
-            //        if (this.climbAnimStep > 15)
-            //            this.climbAnimStep = 0;
-
-            //        if (climb) {
-            //            this.climbing = true;
-            //            this.move_player("ladderUp");
-            //        } else if (left) {
-            //            this.move_player("ladderLeft");
-            //        } else if (right) {
-            //            this.move_player("ladderRight");
-            //        } else if (down) {
-            //            this.move_player("ladderDown");
-            //        }
-            //    }
-
-            //}
-            */
-
 
         }.bind(this));
 
@@ -955,6 +936,31 @@
         }
     }
 
+    hurt_enemy(enemy) {
+        var max = enemy.hp.max;
+        let hb = enemy.hb.parts[2];
+        enemy.hp.current--;
+
+        var bounds = hb.bounds;
+        var offset = 80 / max;
+        var vertices = Matter.Vertices.create([{ x: bounds.min.x + offset, y: bounds.min.y }, { x: bounds.min.x + offset, y: bounds.max.y }, { x: bounds.max.x, y: bounds.max.y }, { x: bounds.max.x, y: bounds.min.y}])
+        this.Body.setVertices(hb, vertices);
+        this.Body.translate(hb, this.Vector.create(offset/2, 0));
+        if (enemy.hp.current == 0)
+            this.destroy_enemy(enemy);
+
+    }
+
+
+    destroy_enemy(enemy) {
+        let body = enemy.body;
+        let hb = enemy.hb;
+
+        this.log("remove enemy id=%d", body.id);
+        delete this.enemies[body.id];
+        Matter.Composite.remove(this.world, body);
+        Matter.Composite.remove(this.world, hb);
+    }
     respawn() {
         Matter.Composite.remove(this.world, this.player.body);
         this.player = this.createPlayer();
@@ -1108,8 +1114,8 @@
     }
 
     //for removing logging
-    log(msg) {
+    log(msg, ...params) {
         if (this.logging)
-            console.log(msg)
+            console.log(msg, ...params)
     }
 }
