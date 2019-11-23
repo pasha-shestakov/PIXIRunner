@@ -35,5 +35,12 @@ $(document).ready(function () {
         })
     });
 
+    $('#storeButton').on('click', toggleStore);
+
 });
+
+function toggleStore() {
+    $('#storeOverlay').toggleClass('show');
+    game.toggle_pause();
+}
     

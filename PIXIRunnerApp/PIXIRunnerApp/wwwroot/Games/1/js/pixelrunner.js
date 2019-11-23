@@ -57,8 +57,6 @@
     throwAnim;
     throwAnimStep = 0;
     //ladderSnapPosition;
-    leftID;
-    rightID;
 
     //collision filters
     defaultFilter = 0x0001;
@@ -551,7 +549,7 @@
             if (this.Bounds.contains(this.shopIcon.bounds, this.Vector.create(x, y))) {
                 console.log("clicked store!");
                 $('#storeOverlay').toggleClass('show');
-                //this.pause_game();
+                this.toggle_pause();
             } else if (!this.climbing && !this.isPaused) {
                 var x_1 = x + this.gameRender.bounds.min.x;
                 var y_1 = y + this.gameRender.bounds.min.y;
@@ -910,10 +908,8 @@
                 event.preventDefault();
                 if (!this.inv_open) {
                     this.inv_open = true;
-                    this.pause_game();
                 } else if (this.inv_open) {
                     this.inv_open = false;
-                    this.unpause_game();
                 }
             }
 
@@ -1173,6 +1169,13 @@
         Matter.Composite.remove(this.gameWorld, body);
     }
 
+    toggle_pause() {
+        this.clearAllPlayerInputs();
+        if (this.isPaused)
+            this.unpause_game();
+        else
+            this.pause_game();
+    }
 
     pause_game() {
         this.isPaused = true;
@@ -1180,7 +1183,8 @@
             var body = this.projectiles[id];
             body.isStatic = true;
         }
-        this.player.body.isStatic = true;
+        if (!this.climbing)
+            this.player.body.isStatic = true;
     }
 
     unpause_game() {
@@ -1189,7 +1193,8 @@
             var body = this.projectiles[id];
             body.isStatic = false;
         }
-        this.player.body.isStatic = false;
+        if (!this.climbing)
+            this.player.body.isStatic = false;
     }
 
     open_chest(id) {
@@ -1237,12 +1242,12 @@
             return false;
     }
 
-    clearAllPlayerIntervals() {
-        clearInterval(this.leftID);
-        this.leftID = null;
-
-        clearInterval(this.rightID);
-        this.rightID = null;
+    clearAllPlayerInputs() {
+        this.player.movement.left = false;
+        this.player.movement.right = false;
+        this.player.movement.up = false;
+        this.player.movement.climbDown = false;
+        this.player.movement.climbUp = false;
     }
 
     outOfBounds(body) {
