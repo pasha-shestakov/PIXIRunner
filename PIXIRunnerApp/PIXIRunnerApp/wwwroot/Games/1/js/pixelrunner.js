@@ -199,7 +199,7 @@ export class PhysicsGame  {
         this.sounds.start_bg_music(0);
 
         window.oncontextmenu = function () {
-            this.clearAllPlayerIntervals();
+            this.clearAllPlayerInputs();
             return false;     // cancel default menu
         }.bind(this);
 
@@ -273,6 +273,17 @@ export class PhysicsGame  {
         }.bind(this));
 
 
+        let gold_icon = this.Bodies.rectangle(35, 85, 50, 50, {
+            isStatic: true,
+            render: {
+                sprite: {
+                    texture: '/Games/1/images/UI/gold_icon.png',
+                    xScale: 0.08,
+                    yScale: 0.08
+                }
+            }
+        });
+        this.World.add(this.overlayWorld, gold_icon);
         this.World.add(this.overlayWorld, this.shopIcon);
     }
 
@@ -639,6 +650,14 @@ export class PhysicsGame  {
             }
         }).bind(this);
 
+
+        this.Events.on(this.overlayEngine, 'beforeUpdate', function () {
+            //update gold each frame.
+            var ctx = this.overlayRender.context;
+            ctx.font = '48px serif';
+            ctx.fillStyle = '#ffffff';
+            ctx.fillText(this.gold, 60, 100);
+        }.bind(this));
 
         this.Events.on(this.gameEngine, 'beforeUpdate', function () {
             var gravity = this.gameEngine.world.gravity;
@@ -1431,6 +1450,8 @@ export class PhysicsGame  {
         else
             return false;
     }
+
+
 
     clearAllPlayerInputs() {
         this.player.movement.left = false;
