@@ -632,7 +632,6 @@ export class PhysicsGame  {
                     clearInterval(this.throwAnim);
                     this.throwAnim = setInterval(this.throwAnimation.bind(this), 60, dir);
                 }
-                //this.log("Throw: " + v_x + ", " + v_y);
 
                 this.Body.applyForce(rock, { x: rock.position.x, y: rock.position.y }, { x: v_x, y: v_y });
                 this.sounds.rock_throw();
@@ -657,9 +656,36 @@ export class PhysicsGame  {
             }
             if (!this.isPaused) {
                 if (this.player.movement.left && !this.climbing) {
+
+                    if (this.player.animStep % this.player.animRate == 0) {
+                        this.player.body.render.sprite.texture = '/Games/1/images/player/walk/walk_L_' + this.player.animStep / this.player.animRate + '.png';
+                        if (this.grounded) {
+                            this.sounds.player_walk();
+
+                        }
+                    }
+                    
+                    if (this.player.animStep > this.player.animRate * this.player.animMax)
+                        this.player.animStep = 0;
+
+                    this.player.animStep++;
+
                     this.move_player("left");
                 }
                 if (this.player.movement.right && !this.climbing) {
+                    if (this.player.animStep % this.player.animRate == 0) {
+                        this.player.body.render.sprite.texture = '/Games/1/images/player/walk/walk_R_' + this.player.animStep / this.player.animRate + '.png';
+                        if (this.grounded) {
+                            this.sounds.player_walk();
+
+                        }
+                    }
+
+                    if (this.player.animStep > this.player.animRate * this.player.animMax)
+                        this.player.animStep = 0;
+
+                    this.player.animStep++;
+
                     this.move_player("right");
                 }
                 if (this.player.movement.up && this.grounded && !this.climbing) {
@@ -834,12 +860,18 @@ export class PhysicsGame  {
 
                     //respawn player when they hit an obstacle.
                     if (pair.bodyB.collisionFilter.category === this.deathFilter) {
-                        if ((pair.bodyB.label === 'falling_rock' && !this.falling_rocks[pair.bodyB.id].death) || pair.bodyB.label === 'spike')
+                        if ((pair.bodyB.label === 'falling_rock' && !this.falling_rocks[pair.bodyB.id].death) || pair.bodyB.label === 'spike') {
+                            this.sounds.player_hurt();
                             this.hurt_player();
 
+                        }
+
                     } else if (pair.bodyA.collisionFilter.category === this.deathFilter) {
-                        if ((pair.bodyA.label === 'falling_rock' && !this.falling_rocks[pair.bodyA.id].death) || pair.bodyA.label === 'spike')
+                        if ((pair.bodyA.label === 'falling_rock' && !this.falling_rocks[pair.bodyA.id].death) || pair.bodyA.label === 'spike') {
+                            this.sounds.player_hurt();
                             this.hurt_player();
+
+                        }
 
                     }
 
@@ -1060,9 +1092,13 @@ export class PhysicsGame  {
                 }
                 if (event.code == 'KeyA') { //LEFT
                     this.player.movement.left = false;
+                    this.player.animStep = 0;
+                    this.player.body.render.sprite.texture = '/Games/1/images/player/Pink_Monster_L.png';
                 }
                 if (event.code == 'KeyD') { //RIGHT
                     this.player.movement.right = false;
+                    this.player.animStep = 0;
+                    this.player.body.render.sprite.texture = '/Games/1/images/player/Pink_Monster_R.png';
                 }
                 if (event.code == 'KeyS') {
                     this.player.movement.climbDown = false;
@@ -1101,12 +1137,14 @@ export class PhysicsGame  {
                 this.screenXMax -= 10;
             }
             //set our texture to the sprite facing left.
-            this.player.body.render.sprite.texture = '/Games/1/images/player/Pink_Monster_L.png';
+            //this.player.body.render.sprite.texture = '/Games/1/images/player/Pink_Monster_L.png';
             if (Math.abs(this.player.body.velocity.x) <= this.max_velocity) {
                 if (!this.grounded)
                     this.Body.applyForce(this.player.body, { x: this.player.body.position.x, y: this.player.body.position.y }, { x: -0.01, y: 0 })
-                else
+                else {
                     this.Body.applyForce(this.player.body, { x: this.player.body.position.x, y: this.player.body.position.y }, { x: -0.02, y: 0 })
+                    
+                }
 
             }
         }
@@ -1116,12 +1154,14 @@ export class PhysicsGame  {
                 this.screenXMax += 10;
             }
             //set our texture to the sprite facing right.
-            this.player.body.render.sprite.texture = '/Games/1/images/player/Pink_Monster_R.png';
+            //this.player.body.render.sprite.texture = '/Games/1/images/player/Pink_Monster_R.png';
             if (Math.abs(this.player.body.velocity.x) <= this.max_velocity) {
                 if (!this.grounded)
                     this.Body.applyForce(this.player.body, { x: this.player.body.position.x, y: this.player.body.position.y }, { x: 0.01, y: 0 })
-                else
+                else {
                     this.Body.applyForce(this.player.body, { x: this.player.body.position.x, y: this.player.body.position.y }, { x: 0.02, y: 0 })
+                    
+                }
             }
         } else if (direction_type == "up") {
             //applying upward force on player body.
@@ -1246,7 +1286,10 @@ export class PhysicsGame  {
                 up: false,
                 climbDown: false,
                 climbUp: false
-            }
+            },
+            animStep: 0,
+            animMax: 5,
+            animRate: 10
         }
 
         /* //testing

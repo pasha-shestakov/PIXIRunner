@@ -1,7 +1,7 @@
 ﻿export default class GameSounds {
     constructor() { }
     //sound effects
-    soundEffectVolume = 0.1;
+    soundEffectVolume = 0.25;
     coin_obj = new Audio('/Games/1/sounds/coin.wav');
     
     rock_obj = new Audio('/Games/1/sounds/fall_rock.mp3');
@@ -10,8 +10,11 @@
     
     spike_obj = new Audio('/Games/1/sounds/spike.wav');
 
+    walk = new Audio('/Games/1/sounds/player_walk.wav');
+
+    oof = new Audio('/Games/1/sounds/oof.wav');
     //music
-    musicVolume = 0.6;
+    musicVolume = 0.5;
     currentIndex;
     maxIndex = 1;
     start_bg_music(index) {
@@ -59,5 +62,17 @@
         this.spike_obj.volume = this.soundEffectVolume;
         this.spike_obj.load();
         this.spike_obj.play();
+    }
+
+    player_walk() {
+        this.walk.volume = this.soundEffectVolume;
+        this.walk.load();
+        this.walk.play();
+    }
+
+    player_hurt() {
+        this.oof.volume = this.soundEffectVolume;
+        this.oof.load();
+        this.oof.play();
     }
 }

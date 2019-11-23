@@ -14,3 +14,5 @@ Assets:
 			https://freesound.org/people/Mixedupmoviestuff/sounds/179222/
 			https://freesound.org/people/denao270/sounds/346373/
 			https://downloads.khinsider.com/game-soundtracks/album/remixed-pixel-dungeon-android-game-music
+			https://freesound.org/people/FxKid2/sounds/365810/
+			https://freesound.org/people/Reitanna/sounds/344033/
