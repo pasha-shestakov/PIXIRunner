@@ -1,8 +1,12 @@
 ﻿export class PhysicsGame  {
-    constructor() {}
+    constructor() { }
+
+    //db globals
     lives;
     checkpoint;
     character;
+    gold;
+
 
     Engine = Matter.Engine;
     Render = Matter.Render;
@@ -19,10 +23,20 @@
     Vector = Matter.Vector;
     Events = Matter.Events;
     Bounds = Matter.Bounds;
-    engine;
-    world;
-    render;
-    runner;
+
+    gameEngine;
+    overlayEngine;
+
+    gameWorld;
+    overlayWorld;
+
+    gameRender;
+    overlayRender;
+
+    gameRunner;
+    overlayRunner;
+
+
     player;
     isPaused;
     max_velocity = 2;
@@ -34,6 +48,8 @@
     ladders = {};
     coins = {};
     enemies = {};
+
+    life_arr = [];
 
     projectileGravity = false;
     grounded = true;
@@ -76,8 +92,11 @@
     mouseconstraint;
     mouse;
 
-    gold;
-    logging = true;
+    
+    logging = false;
+
+    //shop overlay globals
+    shopIcon;
 
     onLoad(load) {
         this.lives = load.lives;
@@ -89,16 +108,25 @@
     }
 
     preInit() {
-        // create engine
-        this.engine = this.Engine.create();
-        this.world = this.engine.world;
-        this.engine.world.gravity.y = 1;
-        // create renderer
-        var canvas = document.getElementById('gameBody');
+        //get canvas objects
+        var gameCanvas = document.getElementById('gameBody');
+        var overlayCanvas = document.getElementById('canvasOverlay');
 
-        this.render = this.Render.create({
-            canvas: canvas,
-            engine: this.engine,
+        // create engines
+        this.gameEngine = this.Engine.create();
+        this.gameWorld = this.gameEngine.world;
+        this.gameWorld.gravity.y = 1;
+
+        this.overlayEngine = this.Engine.create();
+        this.overlayWorld = this.overlayEngine.world;
+        this.overlayWorld.gravity.y = 1;
+
+        
+        
+        // create renderers
+        this.gameRender = this.Render.create({
+            canvas: gameCanvas,
+            engine: this.gameEngine,
             options: {
                 width: 1000,
                 height: 800,
@@ -109,18 +137,33 @@
             }
         });
 
-        this.Render.run(this.render);
+        this.overlayRender = this.Render.create({
+            canvas: overlayCanvas,
+            engine: this.overlayEngine,
+            options: {
+                width: 1000,
+                height: 800,
+                showVelocity: false,
+                showAngleIndicator: false,
+                wireframes: false,
+                wireframeBackground: 'transparent',
+                background: "transparent"
+            }
+        });
+
+        this.Render.run(this.gameRender);
+        this.Render.run(this.overlayRender);
 
         // fit the render viewport to the scene
-        this.Render.lookAt(this.render, {
+        this.Render.lookAt(this.gameRender, {
             min: { x: 0, y: 0 },
             max: { x: 1000, y: 800 }
         });
 
 
         // add mouse control
-        var mouse = this.Mouse.create(canvas),
-            mouseConstraint = this.MouseConstraint.create(this.engine, {
+        var mouse = this.Mouse.create(overlayCanvas),
+            mouseConstraint = this.MouseConstraint.create(this.overlayEngine, {
                 mouse: mouse,
                 constraint: {
                     stiffness: 0.2,
@@ -136,15 +179,16 @@
     init() {
 
         //sets focus on gameBody
-        $("#gameBody").focus();
+        //$("#gameBody").focus();
 
-        //prevents user from losing focus on gameBody
+        /* prevents user from losing focus on gameBody
         $('#gameBody').blur(function (event) {
             setTimeout(function () {
                 alert("lost focus");
                 $("#gameBody").focus();
             }, 20);
         });
+        */
 
         window.oncontextmenu = function () {
             this.clearAllPlayerIntervals();
@@ -152,10 +196,15 @@
         }.bind(this);
 
         // create runner
-        this.runner = this.Runner.create();
-        this.Runner.run(this.runner, this.engine);
+        this.gameRunner = this.Runner.create();
+        this.Runner.run(this.gameRunner, this.gameEngine);
+
+    
+        this.overlayRunner = this.Runner.create();
+        this.Runner.run(this.overlayRunner, this.overlayEngine);
 
         this.loadPlayers();
+        this.initOverlay();
         this.createWorld();
         this.physicsEvents();
     }
@@ -163,6 +212,60 @@
     loadPlayers() {
         this.player = this.createPlayer();
         this.characterControls();
+    }
+
+    initOverlay() {
+        this.shopIcon = this.Bodies.rectangle(965, 35, 50, 50,
+            {
+                isStatic: true,
+                render: {
+                    //fillStyle: '#ff0000',
+                    sprite: {
+                        texture: '/Games/1/images/UI/shop.png'
+                    }
+                }
+            });
+
+
+        var whole = this.lives % 2;
+        var whole_count = Math.floor(this.lives / 2);
+        for (var i = 0; i < whole_count; i++) {
+            this.life_arr.push(
+                this.Bodies.rectangle(35 + (i * 50), 35, 50, 50,
+                    {
+                        isStatic: true,
+                        render: {
+                            fillStyle: '#ff0000',
+                            sprite: {
+                                texture: '/Games/1/images/UI/heart_full.png'
+                            }
+                        }
+                    })
+            );
+            if (i === whole_count - 1 && whole !== 0) {
+                i++;
+                this.life_arr.push(
+                    this.Bodies.rectangle(35 + (i * 50), 35, 50, 50,
+                        {
+                            isStatic: true,
+                            render: {
+                                fillStyle: '#ff0000',
+                                sprite: {
+                                    texture: '/Games/1/images/UI/heart_half.png'
+                                }
+                            }
+                        })
+                );
+            }
+        }
+
+
+        this.life_arr.forEach(function (body) {
+            this.World.add(this.overlayWorld, body);
+        }.bind(this));
+
+
+        this.World.add(this.overlayWorld, this.shopIcon);
     }
 
 
@@ -183,7 +286,7 @@
         //add player
 
         // add bodies
-        this.World.add(this.world, [
+        this.World.add(this.gameWorld, [
             this.Bodies.rectangle(this.game_width / 2, 0, this.game_width, 50, { label: "wall", isStatic: true, render: { fillStyle: "#afafaf" }, collisionFilter: { category: this.wallFilter } }), //roof
             this.Bodies.polygon(300, 760, 3, 30, { label: "deathTriangle", isStatic: true, angle: 1.5708, render: { fillStyle: "#2d9919" }, collisionFilter: { category: this.deathFilter } }), //death triangles{}}), //death triangles
             this.Bodies.polygon(500, 760, 3, 30, { label: "deathTriangle", isStatic: true, angle: 1.5708, render: { fillStyle: "#2d9919" }, collisionFilter: { category: this.deathFilter } }), //death triangles
@@ -193,27 +296,27 @@
             
         ]);
         for (var id in this.ladders) {
-            this.World.add(this.world, this.ladders[id].body);
+            this.World.add(this.gameWorld, this.ladders[id].body);
         }
 
         for (var id in this.chests) {
-            this.World.add(this.world, this.chests[id].body);
+            this.World.add(this.gameWorld, this.chests[id].body);
         }
 
         for (var id in this.signs) {
-            this.World.add(this.world, this.signs[id].body);
+            this.World.add(this.gameWorld, this.signs[id].body);
         }
 
         for (var id in this.coins) {
-            this.World.add(this.world, this.coins[id].body);
+            this.World.add(this.gameWorld, this.coins[id].body);
         }
 
         this.generate_enemies();
         
-        this.World.add(this.world, this.player.body);
-        //this.World.add(this.world, this.mouseconstraint);
+        this.World.add(this.gameWorld, this.player.body);
+        //this.World.add(this.gameWorld, this.mouseconstraint);
         // keep the mouse in sync with rendering
-        this.render.mouse = this.mouse;
+        this.overlayRender.mouse = this.mouse;
     }
     generate_ladders() {
         var ladder1 = this.Bodies.rectangle(125, 625, 5, 300, {
@@ -319,7 +422,7 @@
             }
         }
 
-        this.World.add(this.world,
+        this.World.add(this.gameWorld,
             [
                 enemy1,
                 enemy1HealthBar,
@@ -329,20 +432,20 @@
     }
 
     generate_background() {
-        this.World.add(this.world, this.Bodies.rectangle(108, 657, 171, 232, { label: "background", isStatic: true, isSensor: true, render: { sprite: { texture: '/Games/1/images/bg/bg_0.png', xScale: 1, yScale: 1 } } }));
+        this.World.add(this.gameWorld, this.Bodies.rectangle(108, 657, 171, 232, { label: "background", isStatic: true, isSensor: true, render: { sprite: { texture: '/Games/1/images/bg/bg_0.png', xScale: 1, yScale: 1 } } }));
 
         for (var i = 1; i < 12; i++) {
             var random_bg = Math.floor(Math.random() * 3);
             //171 x 232
-            this.World.add(this.world, this.Bodies.rectangle(108+(i*171), 657, 171, 232, { label: "background", isStatic: true, isSensor: true, render: { sprite: { texture: '/Games/1/images/bg/bg_' + random_bg + '.png', xScale: 1, yScale: 1 } } }));
+            this.World.add(this.gameWorld, this.Bodies.rectangle(108+(i*171), 657, 171, 232, { label: "background", isStatic: true, isSensor: true, render: { sprite: { texture: '/Games/1/images/bg/bg_' + random_bg + '.png', xScale: 1, yScale: 1 } } }));
                 
         }
-        this.World.add(this.world, this.Bodies.rectangle(1989, 657, 171, 232, { label: "background", isStatic: true, isSensor: true, render: { sprite: { texture: '/Games/1/images/bg/bg_0.png', xScale: 1, yScale: 1 } } }));
+        this.World.add(this.gameWorld, this.Bodies.rectangle(1989, 657, 171, 232, { label: "background", isStatic: true, isSensor: true, render: { sprite: { texture: '/Games/1/images/bg/bg_0.png', xScale: 1, yScale: 1 } } }));
 
     }
 
     generate_floors() {
-        this.World.add(this.world,
+        this.World.add(this.gameWorld,
             [
                 this.Bodies.rectangle(0, this.game_height / 2, 46, this.game_height, { label: "wall", friction: 0, isStatic: true, render: { sprite: { texture: '/Games/1/images/world/left_wall.png', xScale: 1, yScale: 1 } }, collisionFilter: { category: this.wallFilter } }), //left_wall
                 this.Bodies.rectangle(this.game_width, this.game_height / 2, 46, this.game_height, { label: "wall", friction: 0, isStatic: true, render: { sprite: { texture: '/Games/1/images/world/right_wall.png', xScale: 1, yScale: 1 } }, collisionFilter: { category: this.wallFilter } }), //right_wall
@@ -440,16 +543,18 @@
     }
  
     physicsEvents() {
-        //update the overlay with debug information
-        //window.setInterval(this.updateStats.bind(this), 100, this.player);
-
-        this.engine.world.gravity.y = 1;
 
         this.Events.on(this.mouseconstraint, "mousedown", (event) => {
+            var x = event.mouse.mousedownPosition.x;
+            var y = event.mouse.mousedownPosition.y;
 
-            if (!this.climbing && !this.isPaused) {
-                var x_1 = event.mouse.mousedownPosition.x;
-                var y_1 = event.mouse.mousedownPosition.y;
+            if (this.Bounds.contains(this.shopIcon.bounds, this.Vector.create(x, y))) {
+                console.log("clicked store!");
+                $('#storeOverlay').toggleClass('show');
+                //this.pause_game();
+            } else if (!this.climbing && !this.isPaused) {
+                var x_1 = x + this.gameRender.bounds.min.x;
+                var y_1 = y + this.gameRender.bounds.min.y;
 
                 var x_2 = this.player.body.position.x;
                 var y_2 = this.player.body.position.y;
@@ -475,7 +580,7 @@
                         }
                     }
                 });
-                this.World.add(this.world, rock);
+                this.World.add(this.gameWorld, rock);
                 this.projectiles[rock.id] = rock;
                 var angle = this.Vector.angle(v_1, v_2);
                 this.log("angle between two points in degrees: %d", (180 * angle / Math.PI) % 360);
@@ -495,8 +600,8 @@
         }).bind(this);
 
 
-        this.Events.on(this.engine, 'beforeUpdate', function () {
-            var gravity = this.engine.world.gravity;
+        this.Events.on(this.gameEngine, 'beforeUpdate', function () {
+            var gravity = this.gameEngine.world.gravity;
             //this.log(engine);
             if (!this.projectileGravity) {
                 for (var id in this.projectiles) {
@@ -525,7 +630,7 @@
                         let body = this.player.body;
                         //let dist_to_ladder = this.ladderSnapPosition - body.position.x;
                         //let displacement = this.Vector.create((body.position.x > this.ladderSnapPosition) ? -dist_to_ladder : dist_to_ladder, 0);
-                        this.Body.applyForce(body, { x: body.position.x, y: body.position.x }, { x: -1 * (body.velocity.x * body.mass) / Math.pow(this.runner.deltaMin, 2), y: -1 * (body.velocity.y * body.mass) / Math.pow(this.runner.deltaMin, 2) })
+                        this.Body.applyForce(body, { x: body.position.x, y: body.position.x }, { x: -1 * (body.velocity.x * body.mass) / Math.pow(this.gameRunner.deltaMin, 2), y: -1 * (body.velocity.y * body.mass) / Math.pow(this.gameRunner.deltaMin, 2) })
 
                         //this.Body.translate(body, displacement);
                         this.climbing = true;
@@ -593,15 +698,15 @@
                 });
             }
 
-            if (this.render.bounds.min.x < this.screenXMin && this.player.movement.right) {
+            if (this.gameRender.bounds.min.x < this.screenXMin && this.player.movement.right) {
                 
-                this.render.bounds.max.x += 3;
-                this.render.bounds.min.x += 3;
+                this.gameRender.bounds.max.x += 3;
+                this.gameRender.bounds.min.x += 3;
             }
-            else if (this.render.bounds.max.x > this.screenXMax && this.player.movement.left) {
+            else if (this.gameRender.bounds.max.x > this.screenXMax && this.player.movement.left) {
 
-                this.render.bounds.max.x -= 3;
-                this.render.bounds.min.x -= 3;
+                this.gameRender.bounds.max.x -= 3;
+                this.gameRender.bounds.min.x -= 3;
             }
 
 
@@ -610,7 +715,7 @@
 
 
         //every collision event
-        this.Events.on(this.engine, 'collisionStart', function (event) {
+        this.Events.on(this.gameEngine, 'collisionStart', function (event) {
 
 
             var pairs = event.pairs;
@@ -632,7 +737,7 @@
 
                     //respawn player when they hit an obstacle.
                     if (pair.bodyB.collisionFilter.category === this.deathFilter || pair.bodyA.collisionFilter.category === this.deathFilter)
-                        this.respawn();
+                        this.hurt_player();
 
                     //near ladder.
                     if (pair.bodyB.collisionFilter.category === this.ladderFilter) {
@@ -706,7 +811,7 @@
             }
         }.bind(this));
 
-        this.Events.on(this.engine, "collisionActive", function (event) {
+        this.Events.on(this.gameEngine, "collisionActive", function (event) {
             var pairs = event.pairs;
             for (var i = 0, j = pairs.length; i != j; ++i) {
                 var pair = pairs[i];
@@ -728,7 +833,7 @@
             }
         }.bind(this));
 
-        this.Events.on(this.engine, 'collisionEnd', function (event) {
+        this.Events.on(this.gameEngine, 'collisionEnd', function (event) {
             var pairs = event.pairs;
 
             for (var i = 0, j = pairs.length; i != j; ++i) {
@@ -958,20 +1063,54 @@
 
         this.log("remove enemy id=%d", body.id);
         delete this.enemies[body.id];
-        Matter.Composite.remove(this.world, body);
-        Matter.Composite.remove(this.world, hb);
+        Matter.Composite.remove(this.gameWorld, body);
+        Matter.Composite.remove(this.gameWorld, hb);
     }
     respawn() {
-        Matter.Composite.remove(this.world, this.player.body);
+        Matter.Composite.remove(this.gameWorld, this.player.body);
         this.player = this.createPlayer();
-        this.World.add(this.world, this.player.body);
+        this.World.add(this.gameWorld, this.player.body);
 
         this.screenXMin = 0;
         this.screenXMax = this.screenX;
-        this.render.bounds.min.x = 0;
-        this.render.bounds.max.x = this.screenX;
+        this.gameRender.bounds.min.x = 0;
+        this.gameRender.bounds.max.x = this.screenX;
         
         
+    }
+    hurt_player() {
+        //TODO
+        this.lives--;
+        
+        if (this.lives == 0) {
+            this.respawn();
+            this.lives = 3;
+            this.sync_health_icons();
+        } else {
+            this.sync_health_icons();
+        }
+        
+    }
+
+    sync_health_icons() {
+        let current_life = this.lives;
+        console.log("current life: %d", current_life);
+        this.life_arr.forEach((body, index) => {
+            if (current_life >= 2) {
+                console.log("setting index: %d to %d", index, current_life);
+                body.render.sprite.texture = '/Games/1/images/UI/heart_full.png';
+                current_life -= 2;
+            } else if (current_life >= 1) {
+                console.log("setting index: %d to %d", index, current_life);
+                body.render.sprite.texture = '/Games/1/images/UI/heart_half.png';
+                current_life -= 1;
+            } else if (current_life == 0) {
+                console.log("setting index: %d to %d", index, current_life);
+                body.render.sprite.texture = '/Games/1/images/UI/heart_empty.png';
+            }
+
+        });
+        this.respawn();
     }
 
     createPlayer() {
@@ -1006,7 +1145,7 @@
         }
 
         /* //testing
-        this.World.add(this.world, this.Bodies.rectangle(50, 730, 35, 65, {
+        this.World.add(this.gameWorld, this.Bodies.rectangle(50, 730, 35, 65, {
             isStatic: true,
             isSensor: true,
             render: {
@@ -1031,7 +1170,7 @@
     removeProjectile(body) {
         this.log("remove projectile id=%d", body.id);
         delete this.projectiles[body.id];
-        Matter.Composite.remove(this.world, body);
+        Matter.Composite.remove(this.gameWorld, body);
     }
 
 
@@ -1074,7 +1213,7 @@
     collect_coin(id) {
         this.gold += this.coins[id].count;
         document.getElementById("gold").innerHTML = this.gold;
-        this.World.remove(this.world, this.coins[id].body);
+        this.World.remove(this.gameWorld, this.coins[id].body);
         delete this.coins[id];
     }
 
@@ -1107,7 +1246,7 @@
     }
 
     outOfBounds(body) {
-        if (body.position.x > this.render.bounds.max.x || body.position.x < this.render.bounds.min.x || body.position.y < this.render.bounds.min.y || body.position.y > this.render.bounds.max.y)
+        if (body.position.x > this.gameRender.bounds.max.x || body.position.x < this.gameRender.bounds.min.x || body.position.y < this.gameRender.bounds.min.y || body.position.y > this.gameRender.bounds.max.y)
             return true;
         else
             return false;

@@ -7,11 +7,12 @@
 
 <h3>@Model.name</h3>
 <div id="@Model.gameID" class="cont">
-
-    <canvas id="gameBody"></canvas>
-    <button class="storeButton" onclick="storeOpen()">Store</button>
+    <div id="gameCont">
+        <canvas id="canvasOverlay"></canvas>
+        <canvas id="gameBody"></canvas>
+    </div>
     <div id="storeOverlay">
-        <button class="storeButton" onclick="storeClose()">Close Store</button>
+        <input id="storeButton" type="image" src="~/Games/1/images/UI/shop.png" onclick="closeStore()"/>
         <h1>Here's the store overlay. Lol.</h1>
     </div>
 
@@ -44,14 +45,11 @@
     <script type="module" src="@("/Games/" + Model.gameID + "/js/game_controller.js")"></script>
 
     <script>
-        function storeOpen() {
-            document.getElementById("storeOverlay").style.display = "block";
-        }
-
-        function storeClose() {
-            document.getElementById("storeOverlay").style.display = "none";
+        function closeStore()
+        {
+            $('#storeOverlay').toggleClass('show');
+            
         }
     </script>
-
 
 }
