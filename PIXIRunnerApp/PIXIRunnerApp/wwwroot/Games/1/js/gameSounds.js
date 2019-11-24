@@ -33,12 +33,13 @@
         this.currentIndex = index;
         this.bg = new Audio('/Games/1/sounds/bg_music' + index + '.mp3');
 
-        if (this.enabled)
+        if (this.enabled) {
             this.bg.volume = this.musicVolume;
-
+        } else
+            this.bg.volume = 0;
+            
         this.bg.load();
         this.bg.play(); //every call to play is added to the dictionary;
-
 
         $(this.bg).on("ended", function () {
 
@@ -49,6 +50,9 @@
 
             this.start_bg_music(this.currentIndex);
         }.bind(this));
+
+
+        
         
     }
 
