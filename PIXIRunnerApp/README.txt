@@ -1,7 +1,9 @@
 Assets: 
 	Game1:
 		Images:
-			https://craftpix.net/freebies/free-pixel-art-tiny-hero-sprites/
+			character assets: https://craftpix.net/freebies/free-pixel-art-tiny-hero-sprites/ creator: CRAFTPIX.NET
+			
+			world assets: https://www.gamedevmarket.net/asset/medieval-pixel-art-asset-free/ creator: https://www.gamedevmarket.net/member/blackspirestudio/
 		Code:
 			https://stackoverflow.com/questions/30678438/matter-js-sprite-size
 			https://stackoverflow.com/questions/22686917/matter-js-change-colors/54617580
