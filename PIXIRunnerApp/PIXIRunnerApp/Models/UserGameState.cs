@@ -9,8 +9,9 @@ namespace PIXIRunnerApp.Models
     {
         public int ID { get; set; }
         public int GameId { get; set; }
-        public int UserID { get; set; }
+        public string UserID { get; set; }
         public int Gold { get; set; }
+        public int AmmoAmount { get; set; }
         public int SelectedSkinId { get; set; }
         public GameSkin SelectedSkin { get; set; }
         public ICollection<GameSkin> UnlockedSkins { get; set; }

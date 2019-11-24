@@ -64,6 +64,10 @@
         }
     }
 
+    set_enabled(enabled) {
+        this.enabled = enabled;
+    }
+
     disable_sounds() {
         this.enabled = false;
     }
