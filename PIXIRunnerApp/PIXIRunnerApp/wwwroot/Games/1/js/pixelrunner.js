@@ -44,6 +44,7 @@ export class PhysicsGame  {
 
 
     player;
+    player_spawn = { x: 50, y: 730 }; //default player spawn
     isPaused;
     max_velocity = 2;
     num_rocks = 10;
@@ -100,7 +101,7 @@ export class PhysicsGame  {
     
     messageText;
     text_window;
-    logging = false;
+    logging = true;
 
     //settings overlay globals
     settingsIcon;
@@ -211,15 +212,26 @@ export class PhysicsGame  {
         this.overlayRunner = this.Runner.create();
         this.Runner.run(this.overlayRunner, this.overlayEngine);
 
-        this.loadPlayers();
+        
         this.initOverlay();
         this.createWorld();
+        this.loadPlayers();
         this.physicsEvents();
     }
 
     loadPlayers() {
+        for (var id in this.signs) {
+            let sign = this.signs[id];
+            if (sign.checkpointID === this.checkpoint) {
+                this.player_spawn = sign.checkpointSpawn;
+                break;
+            }
+        }
+
         this.player = this.createPlayer();
         this.characterControls();
+
+        this.World.add(this.gameWorld, this.player.body);
     }
 
     initOverlay() {
@@ -294,6 +306,19 @@ export class PhysicsGame  {
                 }
             }
         });
+
+        this.text_window = this.Bodies.rectangle(this.screenX / 2, 210, this.screenX - 200, 200,
+            {
+                isStatic: true,
+                render: {
+                    fillStyle: '#545454',
+                    strokeStyle: '#fff',
+                    lineWidth: 5,
+                    opacity: 0.4,
+                    visible: false
+                }
+            });
+        this.World.add(this.overlayWorld, this.text_window);
         this.World.add(this.overlayWorld, gold_icon);
         this.World.add(this.overlayWorld, this.shopIcon);
         this.World.add(this.overlayWorld, this.settingsIcon);
@@ -351,7 +376,7 @@ export class PhysicsGame  {
 
         this.generate_enemies();
         
-        this.World.add(this.gameWorld, this.player.body);
+        
         //this.World.add(this.gameWorld, this.mouseconstraint);
         // keep the mouse in sync with rendering
         this.overlayRender.mouse = this.mouse;
@@ -539,21 +564,38 @@ export class PhysicsGame  {
 
         this.signs[sign1.id] = {
             body: sign1,
-            text: text1
+            text: text1,
+            checkpointID: 1,
+            checkpointSpawn: { x: sign1.position.x, y: sign1.position.y - 20 }
         };
 
-        this.text_window = this.Bodies.rectangle(this.screenX / 2, 210, this.screenX - 200, 200,
-            {
-                isStatic: true,
-                render: {
-                    fillStyle: '#545454',
-                    strokeStyle: '#fff',
-                    lineWidth: 5,
-                    opacity: 0.4,
-                    visible: false
+        /* SIGN2 */
+        var sign2 = this.Bodies.rectangle(1885, 755, 50, 50, {
+            label: "sign2",
+            isStatic: true,
+            isSensor: true,
+            collisionFilter: {
+                category: this.signFilter
+            },
+            render: {
+                fillStyle: "#7a0a85",
+                sprite: {
+                    texture: '/Games/1/images/world/sign.png',
+                    xScale: 2,
+                    yScale: 2
                 }
-            });
-        this.World.add(this.overlayWorld, this.text_window);
+            }
+        });
+        var text2 = "This is a test!";
+
+        this.signs[sign2.id] = {
+            body: sign2,
+            text: text2,
+            checkpointID: 2,
+            checkpointSpawn: { x: sign2.position.x, y: sign2.position.y - 20 }
+        };
+
+        
         
     }
 
@@ -919,7 +961,7 @@ export class PhysicsGame  {
                     //mark player as grounded
                     this.log("collisionStart: (%s, %s):", pair.bodyA.label, pair.bodyB.label);
                     if (pair.bodyB.collisionFilter.category === this.groundFilter || pair.bodyA.collisionFilter.category === this.groundFilter) {
-
+                        console.log("friction 0.1");
                         this.player.body.friction = 0.1;
                         this.grounded = true;
 
@@ -955,9 +997,20 @@ export class PhysicsGame  {
 
                     //sign
                     if (pair.bodyB.collisionFilter.category === this.signFilter) {
-                        this.show_sign(pair.bodyB.id);
+                        let sign = this.signs[pair.bodyB.id];
+                        if (sign.checkpointID > this.checkpoint) {
+                            this.checkpoint = sign.checkpointID;
+                            this.player_spawn = sign.checkpointSpawn;
+                        }
+
+                        this.show_sign(sign.body.id);
                     } else if (pair.bodyA.collisionFilter.category === this.signFilter) {
-                        this.show_sign(pair.bodyA.id);
+                        let sign = this.signs[pair.bodyA.id];
+                        if (sign.checkpointID > this.checkpoint) {
+                            this.checkpoint = sign.checkpointID;
+                            this.player_spawn = sign.checkpointSpawn;
+                        }
+                        this.show_sign(sign.body.id);
                     }
 
                     //coin
@@ -1051,6 +1104,7 @@ export class PhysicsGame  {
                     //we are no longer on the ground.
                     if (pair.bodyA.collisionFilter.category == this.groundFilter || pair.bodyB.collisionFilter.category == this.groundFilter) {
                         this.grounded = false;
+                        console.log("friction 0");
                         this.player.body.friction = 0;
                     }
 
@@ -1288,10 +1342,26 @@ export class PhysicsGame  {
         this.player = this.createPlayer();
         this.World.add(this.gameWorld, this.player.body);
 
-        this.screenXMin = 0;
-        this.screenXMax = this.screenX;
-        this.gameRender.bounds.min.x = 0;
-        this.gameRender.bounds.max.x = this.screenX;
+
+        if (this.player.body.position.x - this.screenX / 2 < 0) {
+            this.screenXMin = 0; //bounded by left wall;
+        } else if (this.player.body.position.x + this.screenX / 2 > this.game_width) {
+            this.screenXMin = this.game_width - this.screenX; //bounded by right wall.
+        }
+        else if (this.player.body.position.x - this.screenX / 2 > 0) {
+            this.screenXMin = this.player.body.position.x - this.screenX / 2; //not bounded by either left or right walls.
+        }
+
+        if (this.player.body.position.x + this.screenX / 2 > this.game_width && this.screenXMin !== 0) {
+            this.screenXMax = this.game_width; //bounded by right wall.
+        } else if (this.player.body.position.x + this.screenX / 2 < this.game_width && this.screenXMin !== 0) {
+            this.screenXMax = this.player.body.position.x + this.screenX / 2; //not bounded by either left or right walls.
+        } else if (this.screenXMin === 0) {
+            this.screenXMax = this.screenX; //bounded by left wall.
+
+        }
+        this.gameRender.bounds.min.x = this.screenXMin;
+        this.gameRender.bounds.max.x = this.screenXMax;
         
         
     }
@@ -1331,7 +1401,7 @@ export class PhysicsGame  {
     }
 
     createPlayer() {
-        var playerBody = this.Bodies.rectangle(50, 730, 20, 70, {
+        var playerBody = this.Bodies.rectangle(this.player_spawn.x, this.player_spawn.y, 20, 70, {
             label: "player",
             isStatic: false,
             inertia: Infinity, //Prevent rotation.
