@@ -15,6 +15,9 @@ namespace PIXIRunnerApp.Models
 
         public DbSet<Game> Game { get; set; }
         public DbSet<SaveState> SaveState { get; set; }
+        public DbSet<Review> Review { get; set; }
+        public DbSet<UserGameState> UserGameState { get; set; }
+        public DbSet<UserGameSettings> UserGameSettings { get; set; }
 
     }
 }
