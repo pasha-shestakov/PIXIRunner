@@ -10,7 +10,7 @@
 
     enabled = true;
     //sound effects
-    soundEffectVolume = 0.25;
+    soundEffectVolume = 0.10;
     
     coin_obj = new Audio('/Games/1/sounds/coin.wav');
     
@@ -26,7 +26,7 @@
 
     open_menu = new Audio('/Games/1/sounds/menu_open.wav');
     //music
-    musicVolume = 0.5;
+    musicVolume = 0.06;
     currentIndex;
     maxIndex = 1;
     start_bg_music(index) {

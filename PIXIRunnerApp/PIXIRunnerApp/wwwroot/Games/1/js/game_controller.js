@@ -57,5 +57,6 @@ function toggleOverlay(event) {
     let name = event.data.name;
     $('#' + name).toggleClass('show');
     game.toggle_pause();
+    game.overlayActive = false;
 }
     
