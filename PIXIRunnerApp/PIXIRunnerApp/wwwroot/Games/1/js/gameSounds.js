@@ -8,7 +8,7 @@
     playing_sounds = {};
     soundID = 0;
 
-    enabled = true;
+    disableSound = false;
     //sound effects
     soundEffectVolume = 0.10;
     
@@ -33,10 +33,10 @@
         this.currentIndex = index;
         this.bg = new Audio('/Games/1/sounds/bg_music' + index + '.mp3');
 
-        if (this.enabled) {
-            this.bg.volume = this.musicVolume;
-        } else
+        if (this.disableSound)
             this.bg.volume = 0;
+        else
+            this.bg.volume = this.musicVolume;
             
         this.bg.load();
         this.bg.play(); //every call to play is added to the dictionary;
@@ -74,8 +74,8 @@
     }
 
     toggleEnable() {
-        if (this.enabled) {
-            this.enabled = false;
+        if (this.disableSound) {
+            this.disableSound = false;
             this.bg.volume = 0;
             for (var id in this.playing_sounds) {
                 this.playing_sounds[id].pause();
@@ -84,19 +84,20 @@
             this.playing_sounds = {};
         }
         else {
-            this.enabled = true;
+            this.disableSound = true;
             this.bg.volume = this.musicVolume;
         }
+    }
     set_enabled(enabled) {
-        this.enabled = enabled;
+        this.disableSound = enabled;
     }
 
     disable_sounds() {
-        this.enabled = false;
+        this.disableSound = false;
     }
 
     play_sound(sound) {
-        if (this.enabled) {
+        if (!this.disableSound) {
             sound.volume = this.soundEffectVolume;
             sound.load();
             sound.play();

@@ -87,7 +87,7 @@ namespace PIXIRunnerApp.Controllers
                 var gameSettings = _context.UserGameSettings.Where(s => s.GameID == gId && s.UserID == userID).FirstOrDefault();
                 return Json(gameSettings);
             }
-            var newGameSettings = new UserGameSettings() { GameID = gId, UserID = userID, MusicVolume = .5F, SoundEffectVolume = .5F, SoundEnabled = true };
+            var newGameSettings = new UserGameSettings() { GameID = gId, UserID = userID, MusicVolume = .5F, SoundEffectVolume = .5F, SoundDisabled = false };
             _context.UserGameSettings.Add(newGameSettings);
             _context.SaveChangesAsync();
             return Json(newGameSettings);
@@ -102,7 +102,7 @@ namespace PIXIRunnerApp.Controllers
         public JsonResult UpdateUserGameSettings(int id, bool soundEnabled, float musicVolume, float soundEffectVolume) {
             if (_context.UserGameSettings.Any(s => s.ID == id)) {
                 var setting = _context.UserGameSettings.Where(s => s.ID == id).FirstOrDefault();
-                setting.SoundEnabled = soundEnabled;
+                setting.SoundDisabled = soundEnabled;
                 setting.MusicVolume = musicVolume;
                 setting.SoundEffectVolume = soundEffectVolume;
                 _context.UserGameSettings.Update(setting);

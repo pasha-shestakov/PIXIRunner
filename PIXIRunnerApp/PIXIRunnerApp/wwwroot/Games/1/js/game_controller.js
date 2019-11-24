@@ -51,6 +51,9 @@ $(document).ready(function () {
             sounds.set_volume('se', _userGameSettings.soundEffectVolume);
             sounds.set_volume('be', _userGameSettings.musicVolume);
             sounds.set_enabled(_userGameSettings.soundsEnabled);
+            document.getElementById('disabled').value = _userGameSettings.soundDisabled;
+            document.getElementById('musicSlider').value = _userGameSettings.musicVolume;
+            document.getElementById('effectsSlider').value = _userGameSettings.soundEffectVolume ;
         }
     })
 
@@ -58,17 +61,10 @@ $(document).ready(function () {
     $('#closeSettingsBtn').click({ name: 'settings' }, toggleOverlay);
 
     $('#disabled').on('input', function () {
-        sounds.toggleEnable();
-        let isDisabled = $('#musicSlider').is(':disabled');
-        if (isDisabled) $('#musicSlider').prop('disabled', false); else $('#musicSlider').prop('disabled', true);
-
-        isDisabled = $('#effectsSlider').is(':disabled');
-        if (isDisabled) $('#effectsSlider').prop('disabled', false); else $('#effectsSlider').prop('disabled', true);
+        
     })
-    $('#musicSlider').on('input', function () { sounds.set_volume('bg', this.value) });
-    $('#effectsSlider').on('input', function () { sounds.set_volume('se', this.value) });
-    //$('#musicSlider').on('input', function (value) { this.setMusicVolume(value) }); //TODO: hook these up to server
-    //$('#effectsSlider').on('input', function (value) { this.setEffectVolume(value) });
+    $('#musicSlider').on('input', function (value) { _userGameSettings.setMusicVolume(value.target.value) });
+    $('#effectsSlider').on('input', function (value) { _userGameSettings.setEffectVolume(value.target.value) });
 });
 
 function toggleOverlay(event) {
@@ -82,28 +78,40 @@ class UserGameState {
     constructor(gold, skins, selectedSkin, minutesPlayed) {
         this.gold = gold;
         this.skins = skins;
-        this.selectedSkin = selectedSkin
+        this.selectedSkin = selectedSkin;
+        this.minutesPlayed = minutesPlayed;
     }
 }
 
 class UserGameSettings {
-    constructor(id, soundEnabled, musicVolume, soundEffectVolume) {
+    constructor(id, soundDisabled, musicVolume, soundEffectVolume)
+    {
         this.id = id;
-        this.soundEnabled = soundEnabled;
+        this.soundDisabled = soundDisabled;
         this.musicVolume = musicVolume;
         this.soundEffectVolume = soundEffectVolume;
+        //this.updateGameSettings();
+    }
+    toggleDisabledSound() {
+        sounds.toggleEnable();
+        this.soundDisabled = !this.soundDisabled;
+        let isDisabled = $('#musicSlider').is(':disabled');
+        if (isDisabled) $('#musicSlider').prop('disabled', false); else $('#musicSlider').prop('disabled', true);
+
+        isDisabled = $('#effectsSlider').is(':disabled');
+        if (isDisabled) $('#effectsSlider').prop('disabled', false); else $('#effectsSlider').prop('disabled', true);
         this.updateGameSettings();
     }
 
     setMusicVolume(volume) {
-        this.musicVolume = volume;
+        this.musicVolume = Number(volume);
         this.updateGameSettings();
         sounds.set_volume('bg', this.musicVolume);
     }
     setEffectVolume(volume) {
-        this.setEffectVolume = volume;
+        this.soundEffectVolume = Number(volume);
         this.updateGameSettings();
-        this.sounds.set_volume('se', this.soundEffectVolume);
+        sounds.set_volume('se', this.soundEffectVolume);
     }
    
     /**
