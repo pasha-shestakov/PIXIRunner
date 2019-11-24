@@ -1,6 +1,7 @@
 ﻿import { PhysicsGame } from './pixelrunner.js';
 import GameSounds from './gameSounds.js'
-const game = new PhysicsGame(new GameSounds(/*settings*/));
+const sounds = new GameSounds();
+const game = new PhysicsGame(sounds);
 game.preInit();
 
 $(document).ready(function () {
@@ -39,6 +40,9 @@ $(document).ready(function () {
 
     $('#closeStoreBtn').click({ name: 'store' }, toggleOverlay);
     $('#closeSettingsBtn').click({ name: 'settings' }, toggleOverlay);
+
+    $('#musicSlider').on('input', function () { sounds.set_volume('bg', this.value) });
+    $('#effectsSlider').on('input', function () { sounds.set_volume('se', this.value) });
 });
 
 function toggleOverlay(event) {

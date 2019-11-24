@@ -34,6 +34,19 @@ a.navbar-brand {
     right: 10px;
 }
 
+/*Settings menu sliders */
+.rangeslider {
+    width: 50%;
+}
+
+.myslider {
+    -webkit-appearance: none;
+    background: #FCF3CF;
+    width: 50%;
+    height: 20px;
+    opacity: 2;
+}
+
 /* Sticky footer styles
 -------------------------------------------------- */
 html {

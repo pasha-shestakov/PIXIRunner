@@ -7,6 +7,7 @@ Assets:
 			https://stackoverflow.com/questions/22686917/matter-js-change-colors/54617580
 			https://brm.io/matter-js/docs/
 			https://github.com/liabru/matter-js/issues/104
+			https://www.geeksforgeeks.org/creating-range-slider-html-using-javascript/
 
 		Sounds:
 			https://freesound.org/people/bradwesson/sounds/135936/
