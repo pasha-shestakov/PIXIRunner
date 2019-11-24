@@ -6,20 +6,21 @@ game.preInit();
 
 var _userGameState;
 var _userGameSettings;
-
+var _gameId;
 $(document).ready(function () {
     var saves = document.querySelectorAll("#launcher button");
-    const gameID = document.querySelector(".cont").id;
-
+    _gameId = document.querySelector(".cont").id;
     saves.forEach((el) => {
         el.addEventListener("click", (el) => {
             if (!el.target.id) {
                 console.log("new button");
                 $.ajax({
-                    url: "/Game/NewGame?id="+ gameID,
+                    url: "/Game/NewGame?id="+ _gameId,
                     success: function (response) {
                         game.onLoad(response);
                         game.init();
+                        initGameSettings();
+                        initGameState();
                         document.getElementById("launcher").hidden = true;
                     }
                 });
@@ -30,6 +31,8 @@ $(document).ready(function () {
                 success: function (response) {
                     game.onLoad(response);
                     game.init();
+                    initGameSettings();
+                    initGameState();
                     document.getElementById("launcher").hidden = true;
 
                 }
@@ -40,32 +43,45 @@ $(document).ready(function () {
 
         })
     });
-    //$.get("Game/UserGameState", (data) => {
-    //    if (data) {
-
-    //    }
-    //})
-    $.get("/Game/UserGameSettings?id="+gameID, (data) => {
-        if (data) {
-            _userGameSettings = new UserGameSettings(data.id, data.soundEnabled, data.musicVolume, data.soundEffectVolume);
-            sounds.set_volume('se', _userGameSettings.soundEffectVolume);
-            sounds.set_volume('be', _userGameSettings.musicVolume);
-            sounds.set_enabled(_userGameSettings.soundsEnabled);
-            document.getElementById('disabled').value = _userGameSettings.soundDisabled;
-            document.getElementById('musicSlider').value = _userGameSettings.musicVolume;
-            document.getElementById('effectsSlider').value = _userGameSettings.soundEffectVolume ;
-        }
-    })
 
     $('#closeStoreBtn').click({ name: 'store' }, toggleOverlay);
     $('#closeSettingsBtn').click({ name: 'settings' }, toggleOverlay);
 
-    $('#disabled').on('input', function () {
-        
-    })
+    $('#disabled').on('input', function () { _userGameSettings.toggleDisabledSound() })
     $('#musicSlider').on('input', function (value) { _userGameSettings.setMusicVolume(value.target.value) });
     $('#effectsSlider').on('input', function (value) { _userGameSettings.setEffectVolume(value.target.value) });
 });
+
+function initGameSettings(){
+    $.get("/Game/UserGameSettings?id=" + _gameId, (data) => {
+        if (data) {
+            _userGameSettings = new UserGameSettings(data.id, data.soundDisabled, data.musicVolume, data.soundEffectVolume);
+            sounds.set_volume('se', _userGameSettings.soundEffectVolume);
+            sounds.set_volume('be', _userGameSettings.musicVolume);
+            sounds.set_enabled(_userGameSettings.soundDisabled);
+            //document.getElementById('disabled').value = _userGameSettings.soundDisabled ? 'off' : 'on';
+            document.getElementById('disabled').checked = _userGameSettings.soundDisabled;
+            let isEnabled = _userGameSettings.soundDisabled
+            if (isEnabled) {
+                $('#musicSlider').prop('disabled', true); 
+                $('#effectsSlider').prop('disabled', true); 
+            } else {
+                $('#musicSlider').prop('disabled', false);
+                $('#effectsSlider').prop('disabled', false);
+            }
+            document.getElementById('musicSlider').value = _userGameSettings.musicVolume;
+            document.getElementById('effectsSlider').value = _userGameSettings.soundEffectVolume;
+        }
+    });
+}
+
+function initGameState() {
+       //$.get("Game/UserGameState", (data) => {
+    //    if (data) {
+
+    //    }
+    //})
+}
 
 function toggleOverlay(event) {
     let name = event.data.name;
@@ -95,6 +111,7 @@ class UserGameSettings {
     toggleDisabledSound() {
         sounds.toggleEnable();
         this.soundDisabled = !this.soundDisabled;
+        //document.getElementById('disabled').value = _userGameSettings.soundDisabled;
         let isDisabled = $('#musicSlider').is(':disabled');
         if (isDisabled) $('#musicSlider').prop('disabled', false); else $('#musicSlider').prop('disabled', true);
 

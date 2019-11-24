@@ -99,10 +99,10 @@ namespace PIXIRunnerApp.Controllers
          * should return bad request.
          * Can somehow bind params to a Object, but not sure how that works so leaving like this.
          */
-        public JsonResult UpdateUserGameSettings(int id, bool soundEnabled, float musicVolume, float soundEffectVolume) {
+        public JsonResult UpdateUserGameSettings(int id, bool soundDisabled, float musicVolume, float soundEffectVolume) {
             if (_context.UserGameSettings.Any(s => s.ID == id)) {
                 var setting = _context.UserGameSettings.Where(s => s.ID == id).FirstOrDefault();
-                setting.SoundDisabled = soundEnabled;
+                setting.SoundDisabled = soundDisabled;
                 setting.MusicVolume = musicVolume;
                 setting.SoundEffectVolume = soundEffectVolume;
                 _context.UserGameSettings.Update(setting);

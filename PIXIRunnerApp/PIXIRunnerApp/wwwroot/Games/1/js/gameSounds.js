@@ -74,8 +74,11 @@
     }
 
     toggleEnable() {
+        this.disableSound = !this.disableSound;
+        this.updateSoundEnabled();
+    }
+    updateSoundEnabled() {
         if (this.disableSound) {
-            this.disableSound = false;
             this.bg.volume = 0;
             for (var id in this.playing_sounds) {
                 this.playing_sounds[id].pause();
@@ -84,12 +87,12 @@
             this.playing_sounds = {};
         }
         else {
-            this.disableSound = true;
             this.bg.volume = this.musicVolume;
         }
     }
     set_enabled(enabled) {
         this.disableSound = enabled;
+        this.updateSoundEnabled();
     }
 
     disable_sounds() {
