@@ -47,7 +47,7 @@ $(document).ready(function () {
     //})
     $.get("/Game/UserGameSettings?id="+gameID, (data) => {
         if (data) {
-            _userGameSettings = new UserGameSettings(data.soundEnabled, data.musicVolume, data.soundEffectVolume);
+            _userGameSettings = new UserGameSettings(data.id, data.soundEnabled, data.musicVolume, data.soundEffectVolume);
             sounds.set_volume('se', _userGameSettings.soundEffectVolume);
             sounds.set_volume('be', _userGameSettings.musicVolume);
             sounds.set_enabled(_userGameSettings.soundsEnabled);
@@ -76,15 +76,20 @@ class UserGameState {
 }
 
 class UserGameSettings {
-    constructor(soundEnabled, musicVolume, soundEffectVolume) {
+    constructor(id, soundEnabled, musicVolume, soundEffectVolume) {
+        this.id = id;
         this.soundEnabled = soundEnabled;
-        this.musicVolume = musicVolume/100;
-        this.soundEffectVolume = soundEffectVolume / 100;
+        this.musicVolume = musicVolume;
+        this.soundEffectVolume = soundEffectVolume;
         this.updateGameSettings();
     }
-    /*updateGameSettings updates the UserGameSettings database record with this */
+
+   
+    /**
+     * updateGameSettings updates the UserGameSettings database record with this
+     */
     updateGameSettings() {
-        $.post("/Game/UpdateGameSettings", this);
+        $.post("/Game/UpdateUserGameSettings", this);
     }
 
 }

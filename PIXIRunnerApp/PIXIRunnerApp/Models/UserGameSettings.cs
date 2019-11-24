@@ -10,8 +10,8 @@ namespace PIXIRunnerApp.Models
         public int ID { get; set; }
         public int GameID { get; set; }
         public string UserID { get; set; }
-        public int MusicVolume { get; set; }
-        public int SoundEffectVolume { get; set; }
+        public float MusicVolume { get; set; }
+        public float SoundEffectVolume { get; set; }
         public bool SoundEnabled { get; set; }
         public Game Game { get; set; }
     }
