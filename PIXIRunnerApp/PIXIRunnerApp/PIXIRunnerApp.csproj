@@ -26,14 +26,4 @@
     <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="2.2.4" />
   </ItemGroup>
 
-
-  <ItemGroup>
-    <Folder Include="wwwroot\Games\1\images\player\Dude_Monster\climb\" />
-    <Folder Include="wwwroot\Games\1\images\player\Dude_Monster\throw\" />
-    <Folder Include="wwwroot\Games\1\images\player\Dude_Monster\walk\" />
-    <Folder Include="wwwroot\Games\1\images\player\Owlet_Monster\climb\" />
-    <Folder Include="wwwroot\Games\1\images\player\Owlet_Monster\throw\" />
-    <Folder Include="wwwroot\Games\1\images\player\Owlet_Monster\walk\" />
-  </ItemGroup>
-
 </Project>
