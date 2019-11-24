@@ -57,6 +57,16 @@ $(document).ready(function () {
     $('#closeStoreBtn').click({ name: 'store' }, toggleOverlay);
     $('#closeSettingsBtn').click({ name: 'settings' }, toggleOverlay);
 
+    $('#disabled').on('input', function () {
+        sounds.toggleEnable();
+        let isDisabled = $('#musicSlider').is(':disabled');
+        if (isDisabled) $('#musicSlider').prop('disabled', false); else $('#musicSlider').prop('disabled', true);
+
+        isDisabled = $('#effectsSlider').is(':disabled');
+        if (isDisabled) $('#effectsSlider').prop('disabled', false); else $('#effectsSlider').prop('disabled', true);
+    })
+    $('#musicSlider').on('input', function () { sounds.set_volume('bg', this.value) });
+    $('#effectsSlider').on('input', function () { sounds.set_volume('se', this.value) });
     //$('#musicSlider').on('input', function (value) { this.setMusicVolume(value) }); //TODO: hook these up to server
     //$('#effectsSlider').on('input', function (value) { this.setEffectVolume(value) });
 });
@@ -65,6 +75,7 @@ function toggleOverlay(event) {
     let name = event.data.name;
     $('#' + name).toggleClass('show');
     game.toggle_pause();
+    game.overlayActive = false;
 }
 
 class UserGameState {
