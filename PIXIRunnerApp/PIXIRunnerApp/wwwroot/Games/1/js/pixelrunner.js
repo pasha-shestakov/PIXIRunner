@@ -232,6 +232,7 @@ export class PhysicsGame  {
         this.characterControls();
 
         this.World.add(this.gameWorld, this.player.body);
+        this.fix_render_bounds();
     }
 
     initOverlay() {
@@ -1343,6 +1344,12 @@ export class PhysicsGame  {
         this.World.add(this.gameWorld, this.player.body);
 
 
+        this.fix_render_bounds();
+        
+        
+    }
+
+    fix_render_bounds() {
         if (this.player.body.position.x - this.screenX / 2 < 0) {
             this.screenXMin = 0; //bounded by left wall;
         } else if (this.player.body.position.x + this.screenX / 2 > this.game_width) {
@@ -1362,8 +1369,6 @@ export class PhysicsGame  {
         }
         this.gameRender.bounds.min.x = this.screenXMin;
         this.gameRender.bounds.max.x = this.screenXMax;
-        
-        
     }
     hurt_player() {
         //TODO
