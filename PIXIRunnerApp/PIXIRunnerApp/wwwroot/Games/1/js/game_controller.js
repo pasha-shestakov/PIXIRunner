@@ -1,6 +1,6 @@
 ﻿import { PhysicsGame } from './pixelrunner.js';
 import GameSounds from './gameSounds.js'
-const game = new PhysicsGame(new GameSounds());
+const game = new PhysicsGame(new GameSounds(/*settings*/));
 game.preInit();
 
 $(document).ready(function () {
@@ -31,17 +31,19 @@ $(document).ready(function () {
                 }
             });
 
-            $('#overlay').css('display', 'none');
+            //hide launcher buttons.
+            //$('#overlay').css('display', 'none');
 
         })
     });
 
-    $('#storeButton').on('click', toggleStore);
-
+    $('#closeStoreBtn').click({ name: 'store' }, toggleOverlay);
+    $('#closeSettingsBtn').click({ name: 'settings' }, toggleOverlay);
 });
 
-function toggleStore() {
-    $('#storeOverlay').toggleClass('show');
+function toggleOverlay(event) {
+    let name = event.data.name;
+    $('#' + name).toggleClass('show');
     game.toggle_pause();
 }
     

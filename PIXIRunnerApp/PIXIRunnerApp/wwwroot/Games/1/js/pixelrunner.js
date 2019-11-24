@@ -102,6 +102,9 @@ export class PhysicsGame  {
     text_window;
     logging = false;
 
+    //settings overlay globals
+    settingsIcon;
+
     //shop overlay globals
     shopIcon;
 
@@ -233,6 +236,17 @@ export class PhysicsGame  {
                 }
             });
 
+        this.settingsIcon = this.Bodies.rectangle(965, 85, 50, 50,
+            {
+                isStatic: true,
+                render: {
+                    //fillStyle: '#ff0000',
+                    sprite: {
+                        texture: '/Games/1/images/UI/settings.png'
+                    }
+                }
+            });
+
 
         var whole = this.lives % 2;
         var whole_count = Math.floor(this.lives / 2);
@@ -284,6 +298,7 @@ export class PhysicsGame  {
         });
         this.World.add(this.overlayWorld, gold_icon);
         this.World.add(this.overlayWorld, this.shopIcon);
+        this.World.add(this.overlayWorld, this.settingsIcon);
     }
 
 
@@ -613,7 +628,11 @@ export class PhysicsGame  {
 
             if (this.Bounds.contains(this.shopIcon.bounds, this.Vector.create(x, y))) {
                 console.log("clicked store!");
-                $('#storeOverlay').toggleClass('show');
+                $('#store').toggleClass('show');
+                this.toggle_pause();
+            } else if (this.Bounds.contains(this.settingsIcon.bounds, this.Vector.create(x, y))) {
+                console.log("clicked settings!");
+                $('#settings').toggleClass('show');
                 this.toggle_pause();
             } else if (!this.climbing && !this.isPaused) {
                 var x_1 = x + this.gameRender.bounds.min.x;
@@ -1431,7 +1450,6 @@ export class PhysicsGame  {
             switch (value.type) {
                 case "gold":
                     this.gold += value.count;
-                    document.getElementById("gold").innerHTML = this.gold;
                     break;
                 default:
                     this.log("unknown type: '" + value.type + "'");
@@ -1443,7 +1461,6 @@ export class PhysicsGame  {
     collect_coin(id) {
         this.gold += this.coins[id].count;
         this.sounds.coin();
-        document.getElementById("gold").innerHTML = this.gold;
         this.World.remove(this.gameWorld, this.coins[id].body);
         delete this.coins[id];
     }
