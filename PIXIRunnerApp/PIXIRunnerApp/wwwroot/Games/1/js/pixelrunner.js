@@ -1466,6 +1466,7 @@ export class PhysicsGame  {
     }
 
     show_sign(id) {
+        this.sounds.menu_open();
         this.text_window.render.visible = true;
 
         this.messageText = this.signs[id].text;
