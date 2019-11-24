@@ -122,7 +122,7 @@ export class PhysicsGame  {
     onLoad(load) {
         this.lives = load.lives;
         this.checkpoint = load.checkpoint;
-        this.character = load.character;
+        this.character = 1;//load.character;
         this.gold = 100;
     }
 
