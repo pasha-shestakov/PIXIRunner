@@ -57,8 +57,8 @@ $(document).ready(function () {
     $('#closeStoreBtn').click({ name: 'store' }, toggleOverlay);
     $('#closeSettingsBtn').click({ name: 'settings' }, toggleOverlay);
 
-    $('#musicSlider').on('input', function () { sounds.set_volume('bg', this.value) }); //TODO: hook these up to server
-    $('#effectsSlider').on('input', function () { sounds.set_volume('se', this.value) });
+    //$('#musicSlider').on('input', function (value) { this.setMusicVolume(value) }); //TODO: hook these up to server
+    //$('#effectsSlider').on('input', function (value) { this.setEffectVolume(value) });
 });
 
 function toggleOverlay(event) {
@@ -84,6 +84,16 @@ class UserGameSettings {
         this.updateGameSettings();
     }
 
+    setMusicVolume(volume) {
+        this.musicVolume = volume;
+        this.updateGameSettings();
+        sounds.set_volume('bg', this.musicVolume);
+    }
+    setEffectVolume(volume) {
+        this.setEffectVolume = volume;
+        this.updateGameSettings();
+        this.sounds.set_volume('se', this.soundEffectVolume);
+    }
    
     /**
      * updateGameSettings updates the UserGameSettings database record with this
