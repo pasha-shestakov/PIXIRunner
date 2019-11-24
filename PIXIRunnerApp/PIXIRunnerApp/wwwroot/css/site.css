@@ -56,7 +56,7 @@ a.navbar-brand {
     /* Black background with opacity */
     z-index: 2;
     /* Specify a stack order in case you're using a different order for other elements */
-    cursor: pointer;
+    /* cursor: pointer; */
     /* Add a pointer on hover */
     padding: 20px;
 }
@@ -154,6 +154,11 @@ body {
     /*background-color: #6f7075;*/
     background-color: #212227;
     color: white;
+
+    -webkit-user-select: none; /* webkit (safari, chrome) browsers */
+    -moz-user-select: none; /* mozilla browsers */
+    -khtml-user-select: none; /* webkit (konqueror) browsers */
+    -ms-user-select: none; /* IE10+ */
 }
 
 .footer {

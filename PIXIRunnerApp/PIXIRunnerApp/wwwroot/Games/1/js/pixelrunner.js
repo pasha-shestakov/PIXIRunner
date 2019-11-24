@@ -120,8 +120,8 @@ export class PhysicsGame  {
 
     preInit() {
         //get canvas objects
-        var gameCanvas = document.getElementById('gameBody');
-        var overlayCanvas = document.getElementById('canvasOverlay');
+        var gameCanvas = $('#gameBody').get(0);
+        var overlayCanvas = $('#canvasOverlay').get(0);
 
         // create engines
         this.gameEngine = this.Engine.create();
@@ -197,10 +197,11 @@ export class PhysicsGame  {
         //start bg music
         this.sounds.start_bg_music(0);
 
-        window.oncontextmenu = function () {
-            this.clearAllPlayerInputs();
+        $('#canvasOverlay').on('contextmenu', function () {
+            console.log("contextmenu");
+            //this.clearAllPlayerInputs();
             return false;     // cancel default menu
-        }.bind(this);
+        }.bind(this));
 
         // create runner
         this.gameRunner = this.Runner.create();
