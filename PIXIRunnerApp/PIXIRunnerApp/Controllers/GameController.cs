@@ -12,6 +12,7 @@ using PIXIRunnerApp.Models;
 
 namespace PIXIRunnerApp.Controllers
 {
+    [Authorize]
     public class GameController : Controller
     {
         private readonly GameContext _context;
@@ -70,6 +71,45 @@ namespace PIXIRunnerApp.Controllers
                 return NotFound();
             else
                 return View(game);
+        }
+
+        /**
+         * UserGameSettings returns the serialized UserGameSetting object that matches id. If one doesn't exist, it is created.
+         */
+        public JsonResult UserGameSettings(int? id) {
+            if (id == null) {
+                return null;
+            }
+            int gId = id ?? default(int);
+            var userID = User.Identity.GetUserId();
+
+            if (_context.UserGameSettings.Any(s => s.GameID == gId && s.UserID == userID)) {
+                var gameSettings = _context.UserGameSettings.Where(s => s.GameID == gId && s.UserID == userID).FirstOrDefault();
+                return Json(gameSettings);
+            }
+            var newGameSettings = new UserGameSettings() { GameID = gId, UserID = userID, MusicVolume = .5F, SoundEffectVolume = .5F, SoundDisabled = false };
+            _context.UserGameSettings.Add(newGameSettings);
+            _context.SaveChangesAsync();
+            return Json(newGameSettings);
+
+        }
+
+        /**
+         * UpdateUserGameSettings updates the record in the database with the supplied arguments. If a record doesn't exist
+         * should return bad request.
+         * Can somehow bind params to a Object, but not sure how that works so leaving like this.
+         */
+        public JsonResult UpdateUserGameSettings(int id, bool soundDisabled, float musicVolume, float soundEffectVolume) {
+            if (_context.UserGameSettings.Any(s => s.ID == id)) {
+                var setting = _context.UserGameSettings.Where(s => s.ID == id).FirstOrDefault();
+                setting.SoundDisabled = soundDisabled;
+                setting.MusicVolume = musicVolume;
+                setting.SoundEffectVolume = soundEffectVolume;
+                _context.UserGameSettings.Update(setting);
+                _context.SaveChanges();
+                return Json(setting);
+            }
+            return null;
         }
     }
 }

@@ -3,15 +3,17 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using PIXIRunnerApp.Models;
 
 namespace PIXIRunnerApp.Migrations.Game
 {
     [DbContext(typeof(GameContext))]
-    partial class GameContextModelSnapshot : ModelSnapshot
+    [Migration("20191124070942_AddEnabledToUserGameSetting")]
+    partial class AddEnabledToUserGameSetting
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -109,11 +111,11 @@ namespace PIXIRunnerApp.Migrations.Game
 
                     b.Property<int>("GameID");
 
-                    b.Property<float>("MusicVolume");
+                    b.Property<int>("MusicVolume");
 
-                    b.Property<bool>("SoundDisabled");
+                    b.Property<int>("SoundEffectVolume");
 
-                    b.Property<float>("SoundEffectVolume");
+                    b.Property<bool>("SoundEnabled");
 
                     b.Property<string>("UserID");
 
