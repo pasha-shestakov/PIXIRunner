@@ -51,7 +51,8 @@ export class PhysicsGame  {
 
 
     player;
-    player_spawn = { x: 50, y: 730 }; //default player spawn
+    default_spawn = { x: 50, y: 730 };
+    player_spawn = this.default_spawn; //default player spawn
     isPaused;
     max_velocity = 2;
     num_rocks = 10;
@@ -69,6 +70,12 @@ export class PhysicsGame  {
 
     projectileGravity = false;
     grounded = true;
+
+    throwing = false;
+    throw_position;
+    throw_rate = 20;
+    lastclick = new Date().getTime();
+
     inv_open = false;
     throwAnim;
     throwAnimStep = 0;
@@ -123,7 +130,7 @@ export class PhysicsGame  {
     onLoad(load) {
         this.lives = load.lives;
         this.checkpoint = load.checkpoint;
-        this.character = 2; //load.character;
+        this.character = load.character;
         this.gold = 100;
     }
 
@@ -213,8 +220,11 @@ export class PhysicsGame  {
 
         $('#canvasOverlay').on('contextmenu', function () {
             this.log("contextmenu");
-            //this.clearAllPlayerInputs();
             return false;     // cancel default menu
+        }.bind(this));
+
+        $('#canvasOverlay').on('mouseout', function () {
+            this.throwing = false;
         }.bind(this));
 
         // create runner
@@ -253,6 +263,7 @@ export class PhysicsGame  {
             let sign = this.signs[id];
             if (sign.checkpointID === this.checkpoint) {
                 this.player_spawn = sign.checkpointSpawn;
+                this.default_spawn = sign.checkpointSpawn;
                 break;
             }
         }
@@ -755,6 +766,19 @@ export class PhysicsGame  {
     }
  
     physicsEvents() {
+        this.Events.on(this.mouseconstraint, 'mousemove', (event) => {
+            if (this.throwing) {
+                console.log(event);
+                var x = event.mouse.position.x;
+                var y = event.mouse.position.y;
+
+                var x_1 = x;
+                var y_1 = y;
+
+                this.throw_position = { x: x_1, y: y_1 };
+
+            }
+        }).bind(this);
 
         this.Events.on(this.mouseconstraint, "mousedown", (event) => {
             var x = event.mouse.mousedownPosition.x;
@@ -774,53 +798,28 @@ export class PhysicsGame  {
                 if (!this.isPaused)
                     this.toggle_pause();
             } else if (!this.climbing && !this.isPaused) {
-                var x_1 = x + this.gameRender.bounds.min.x;
-                var y_1 = y + this.gameRender.bounds.min.y;
+                var x_1 = x;
+                var y_1 = y;
 
-                var x_2 = this.player.body.position.x;
-                var y_2 = this.player.body.position.y;
-                this.log("click at world position: (%s,%s)\nplayer at world position: (%s,%s)", x_1, y_1, x_2, y_2);
-                var dir = 'R';
-                if (x_1 < x_2)
-                    dir = 'L';
+                var date = new Date();
+                var current = date.getTime();
 
-                var v_1 = this.Vector.create(x_1, y_1);
-                var v_2 = this.Vector.create(x_2, y_2);
-                var throwspeed = 0.0015;
-                var rock = this.Bodies.rectangle(x_2, y_2, 5, 5, {
-                    label: "player_proj",
-                    collisionFilter: {
-                        category: this.player_proj,
-                        mask: this.groundFilter | this.wallFilter | this.deathFilter | this.enemyFilter
-                    },
-                    isStatic: false,
-                    render: {
-                        //fillStyle: "#7a0a85",
-                        sprite: {
-                            texture: '/Games/1/images/player/projectiles/Rock.png'
-                        }
-                    }
-                });
-                this.World.add(this.gameWorld, rock);
-                this.projectiles[rock.id] = rock;
-                var angle = this.Vector.angle(v_1, v_2);
-                this.log("angle between two points in degrees: %d", (180 * angle / Math.PI) % 360);
-                var v_x = -1 * (Math.cos(angle) * throwspeed);
-                var v_y = -1 * (Math.sin(angle) * throwspeed);
-                if (this.throwAnim === undefined)
-                    this.throwAnim = setInterval(this.throwAnimation.bind(this), 60, dir);
-                else {
-                    clearInterval(this.throwAnim);
-                    this.throwAnim = setInterval(this.throwAnimation.bind(this), 60, dir);
+                if (current - this.lastclick > this.throw_rate * 11) {
+                    
+                    this.throw_position = { x: x_1, y: y_1 };
+                    this.throw_projectile(this.throw_position.x + this.gameRender.bounds.min.x, this.throw_position.y + this.gameRender.bounds.min.y);
+                    this.throwing = true;
+                    this.lastclick = current;
                 }
-
-                this.Body.applyForce(rock, { x: rock.position.x, y: rock.position.y }, { x: v_x, y: v_y });
-                this.sounds.rock_throw();
-                this.log("throwing projectile id=%d", rock.id);
+                
+                
             }
         }).bind(this);
 
-
+        this.Events.on(this.mouseconstraint, 'mouseup', (event) => {
+            this.throwing = false;
+            this.throw_rate = 20;
+        }).bind(this);
         this.Events.on(this.overlayEngine, 'beforeUpdate', function () {
             //update gold each frame.
             var ctx = this.overlayRender.context;
@@ -857,6 +856,15 @@ export class PhysicsGame  {
                         this.removeProjectile(body);
                 }
             }
+
+            if (this.throwing) {
+                this.throw_rate--;
+                if (this.throw_rate === 0) {
+                    this.throw_projectile(this.throw_position.x + this.gameRender.bounds.min.x, this.throw_position.y + this.gameRender.bounds.min.y);
+                    this.throw_rate = 20;
+                }
+            }
+
             if (!this.isPaused) {
                 if (this.player.movement.left && !this.climbing) {
 
@@ -1369,6 +1377,7 @@ export class PhysicsGame  {
             
         }.bind(this));
     }
+    
 
     updateStats(body) {
         //for debugging physics purposes. Displayed as an overlay on our game panel.
@@ -1512,6 +1521,8 @@ export class PhysicsGame  {
         this.lives--;
         
         if (this.lives == 0) {
+            this.checkpoint = 0;
+            this.player_spawn = this.default_spawn;
             this.respawn();
             this.lives = 3;
             this.sync_health_icons();
@@ -1626,6 +1637,49 @@ export class PhysicsGame  {
             this.player.body.render.sprite.texture = '/Games/1/images/player/' + this.character_path + '/' + dir + '.png';
             clearInterval(this.throwAnim);
         }
+    }
+
+    throw_projectile(x_1, y_1) {
+        var x_2 = this.player.body.position.x;
+        var y_2 = this.player.body.position.y;
+        this.log("click at world position: (%s,%s)\nplayer at world position: (%s,%s)", x_1, y_1, x_2, y_2);
+        var dir = 'R';
+        if (x_1 < x_2)
+            dir = 'L';
+
+        var v_1 = this.Vector.create(x_1, y_1);
+        var v_2 = this.Vector.create(x_2, y_2);
+        var throwspeed = 0.0015;
+        var rock = this.Bodies.rectangle(x_2, y_2, 5, 5, {
+            label: "player_proj",
+            collisionFilter: {
+                category: this.player_proj,
+                mask: this.groundFilter | this.wallFilter | this.deathFilter | this.enemyFilter
+            },
+            isStatic: false,
+            render: {
+                //fillStyle: "#7a0a85",
+                sprite: {
+                    texture: '/Games/1/images/player/projectiles/Rock.png'
+                }
+            }
+        });
+        this.World.add(this.gameWorld, rock);
+        this.projectiles[rock.id] = rock;
+        var angle = this.Vector.angle(v_1, v_2);
+        this.log("angle between two points in degrees: %d", (180 * angle / Math.PI) % 360);
+        var v_x = -1 * (Math.cos(angle) * throwspeed);
+        var v_y = -1 * (Math.sin(angle) * throwspeed);
+        if (this.throwAnim === undefined)
+            this.throwAnim = setInterval(this.throwAnimation.bind(this), 60, dir);
+        else {
+            clearInterval(this.throwAnim);
+            this.throwAnim = setInterval(this.throwAnimation.bind(this), 60, dir);
+        }
+
+        this.Body.applyForce(rock, { x: rock.position.x, y: rock.position.y }, { x: v_x, y: v_y });
+        this.sounds.rock_throw();
+        this.log("throwing projectile id=%d", rock.id);
     }
 
     removeProjectile(body) {
