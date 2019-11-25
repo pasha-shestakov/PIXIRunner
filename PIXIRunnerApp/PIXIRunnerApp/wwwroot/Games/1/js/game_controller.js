@@ -57,7 +57,7 @@ function initGameSettings(){
         if (data) {
             _userGameSettings = new UserGameSettings(data.id, data.soundDisabled, data.musicVolume, data.soundEffectVolume);
             sounds.set_volume('se', _userGameSettings.soundEffectVolume);
-            sounds.set_volume('be', _userGameSettings.musicVolume);
+            sounds.set_volume('bg', _userGameSettings.musicVolume);
             sounds.set_enabled(_userGameSettings.soundDisabled);
             //document.getElementById('disabled').value = _userGameSettings.soundDisabled ? 'off' : 'on';
             document.getElementById('disabled').checked = _userGameSettings.soundDisabled;
