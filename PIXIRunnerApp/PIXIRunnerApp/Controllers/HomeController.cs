@@ -12,7 +12,7 @@ namespace PIXIRunnerApp.Controllers
     {
         public IActionResult Index()
         {
-            return View();
+            return Redirect("/Game");
         }
 
         public IActionResult Privacy()

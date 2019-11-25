@@ -448,7 +448,7 @@ export class PhysicsGame  {
     }
 
     generate_ladders() {
-        var ladder1 = this.Bodies.rectangle(125, 625, 5, 300, {
+        var ladder1 = this.Bodies.rectangle(125, 625, 10, 300, {
             label: "ladder1",
             isStatic: true,
             isSensor: true,
