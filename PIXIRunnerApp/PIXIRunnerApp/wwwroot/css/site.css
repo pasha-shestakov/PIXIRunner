@@ -25,7 +25,9 @@ a.navbar-brand {
     top: 600px;
     min-width: 90px;
 }
-
+#gameBody{
+    background:black;
+}
 .closed_door {
     z-index: 4;
     left: 274px;

@@ -434,7 +434,8 @@ export class PhysicsGame  {
                     sprite: {
                         texture: '/Games/1/images/world/grate0.png'
                     }
-                }, collisionFilter: { category: this.wallFilter }
+                },
+                collisionFilter: { category: this.wallFilter }
             })
 
         this.grates[grate1.id] = {
@@ -484,7 +485,7 @@ export class PhysicsGame  {
             render: {
                 fillStyle: "#7a0a85",
                 sprite: {
-                    texture: '/Games/1/images/enemy/Reaper_Man_L.png',
+                    texture: '/Games/1/images/enemy/Reaper_Man/L.png',
                     xScale: 0.1,
                     yScale: 0.1,
                 }
@@ -577,6 +578,9 @@ export class PhysicsGame  {
             hb: enemy1HealthBar,
             chaseCollider: chaseCollider,
             patrol: patrolPath,
+            animRate: 5,
+            animStep: 0,
+            animMax: 23,
             hp: {
                 max: 6,
                 current: 6
@@ -995,10 +999,35 @@ export class PhysicsGame  {
                 for (var id in this.enemies) {
                     var enemy = this.enemies[id];
 
-                    if (enemy.movement.left)
+                    if (enemy.movement.left) {
+                        if (enemy.animStep % enemy.animRate == 0) {
+                            enemy.body.render.sprite.texture = '/Games/1/images/enemy/Reaper_Man/walk/L_' + enemy.animStep / enemy.animRate + '.png';
+                            
+                        }
+
+                        if (enemy.animStep >= enemy.animRate * enemy.animMax)
+                            enemy.animStep = 0;
+
+                        enemy.animStep++;
+
+
                         this.move(enemy.body, 'left');
-                    if (enemy.movement.right)
+
+                    }
+                    if (enemy.movement.right) {
+                        if (enemy.animStep % enemy.animRate == 0) {
+                            enemy.body.render.sprite.texture = '/Games/1/images/enemy/Reaper_Man/walk/R_' + enemy.animStep / enemy.animRate + '.png';
+
+                        }
+
+                        if (enemy.animStep >= enemy.animRate * enemy.animMax)
+                            enemy.animStep = 0;
+
+                        enemy.animStep++;
+
                         this.move(enemy.body, 'right');
+
+                    }
                 }
             }
 
@@ -1149,6 +1178,7 @@ export class PhysicsGame  {
                         //enemy has collided with his patrol zone, we need to update his direction
                         enemy.patrol.forEach((patrol, index) => {
                             if (patrol.collisionBody.id === patrol_collider.id) {
+                                enemy.animStep = 0;
                                 switch (enemy.patrol[index].action) {
                                     case 'left':
                                         enemy.movement.left = true;
