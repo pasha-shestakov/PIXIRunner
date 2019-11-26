@@ -365,7 +365,6 @@ export class PhysicsGame  {
         this.World.add(this.overlayWorld, this.settingsIcon);
     }
 
-
     createWorld() {
         this.generate_chests();
         this.generate_signs();
@@ -469,6 +468,7 @@ export class PhysicsGame  {
             body: ladder1
         }
     }
+
     generate_enemies() {
 
         
@@ -648,6 +648,7 @@ export class PhysicsGame  {
 
         
     }
+
     generate_signs() {
         var sign1 = this.Bodies.rectangle(800, 755, 50, 50, {
             label: "sign1",
@@ -820,6 +821,7 @@ export class PhysicsGame  {
             this.throwing = false;
             this.throw_rate = 20;
         }).bind(this);
+
         this.Events.on(this.overlayEngine, 'beforeUpdate', function () {
             //update gold each frame.
             var ctx = this.overlayRender.context;
@@ -1297,8 +1299,6 @@ export class PhysicsGame  {
 
     characterControls() {
         //user controls A(LEFT), D(RIGHT), {SPACE}(JUMP)
-        //var up, left, right, climb, down = false;
-
         document.addEventListener('keydown', function (event) {
 
             //pause on escape
@@ -1377,20 +1377,6 @@ export class PhysicsGame  {
             
         }.bind(this));
     }
-    
-
-    updateStats(body) {
-        //for debugging physics purposes. Displayed as an overlay on our game panel.
-        $("#position").html("Position: " + body.position.x + ", " + body.position.y);
-        $("#inertia").html("Inertia: " + body.inertia);
-        $("#torque").html("Torque: " + body.torque);
-        $("#velocity").html("Velocity: " + body.velocity.x + ", " + body.velocity.y);
-        $("#angularSpeed").html("Angular Speed: " + body.angularSpeed);
-        $("#angularVelocity").html("Angular Velocity: " + body.angularVelocity);
-
-        $("#checkpoint").html("Checkpoint: " + this.checkpoint);
-        $("#character").html("Character: " + this.character);
-    }
 
     move(body, direction_type) {
 
@@ -1444,14 +1430,6 @@ export class PhysicsGame  {
         }
     }
 
-    move_enemy(enemyBody, direction) {
-        if (direction === "left") {
-
-        } else if (direction === "right") {
-
-        }
-    }
-
     hurt_enemy(enemy) {
         var max = enemy.hp.max;
         let hb = enemy.hb.parts[2];
@@ -1466,7 +1444,6 @@ export class PhysicsGame  {
             this.destroy_enemy(enemy);
 
     }
-
 
     destroy_enemy(enemy) {
         let body = enemy.body;
@@ -1484,6 +1461,7 @@ export class PhysicsGame  {
 
         delete this.enemies[body.id];
     }
+
     respawn() {
         Matter.Composite.remove(this.gameWorld, this.player.body);
         this.player = this.createPlayer();
@@ -1586,15 +1564,6 @@ export class PhysicsGame  {
             animMax: 5,
             animRate: 10
         }
-
-        /* //testing
-        this.World.add(this.gameWorld, this.Bodies.rectangle(50, 730, 35, 65, {
-            isStatic: true,
-            isSensor: true,
-            render: {
-                fillStyle: "#7a0a85"
-            }
-        }))*/
         return player;
     }
 
@@ -1626,7 +1595,6 @@ export class PhysicsGame  {
 
         this.World.add(this.gameWorld, falling_rock);
     }
-
 
     throwAnimation(dir) {
         this.player.body.render.sprite.texture = '/Games/1/images/player/' + this.character_path + '/throw/' + dir + '_' + this.throwAnimStep + '.png';
@@ -1770,8 +1738,6 @@ export class PhysicsGame  {
         else
             return false;
     }
-
-
 
     clearAllPlayerInputs() {
         if (this.player.movement.left && this.grounded) {
