@@ -67,6 +67,8 @@ export class PhysicsGame  {
     enemies = {};
     grates = {};
     falling_rocks = {};
+    chase_colliders = {};
+    throw_colliders = {};
 
     life_arr = [];
 
@@ -87,7 +89,7 @@ export class PhysicsGame  {
     defaultFilter = 0x0001;
     playerFilter = 0x0002;
     deathFilter = 0x0004;
-    powerupFilter = 0x0008;
+    chaseFilter = 0x0008;
     player_proj = 0x0010;
     enemy_proj = 0x0020;
     ladderFilter = 0x0040;
@@ -98,6 +100,7 @@ export class PhysicsGame  {
     wallFilter = 0x0800;
     enemyFilter = 0x1000;
     patrolFilter = 0x2000;
+    enemyThrowFilter = 0x4000;
 
     nearLadder = false;
     climbing = false;
@@ -495,7 +498,7 @@ export class PhysicsGame  {
         });
 
         var hb_x = enemy1.position.x;
-        var hb_y = enemy1.position.y + 50;
+        var hb_y = enemy1.position.y+ 50;
         //var enemyID = setInterval(this.enemy_jump.bind(this), 1000, enemy1.id);
         var greenBar = this.Bodies.rectangle(hb_x, hb_y, 80, 20, {
             label: "healthbar_green",
@@ -552,12 +555,42 @@ export class PhysicsGame  {
             render: {
                 fillStyle: '#00ff00',
                 opacity: 0.4,
-                visible: false
+                //visible: false
+            },
+            collisionFilter:
+            {
+                category: this.enemyChaseFilter,
+                mask: this.playerFilter
             }
         });
+
+        var throwCollider = this.Bodies.rectangle(1000, 730, 250, 250, {
+            isStatic: false,
+            isSensor: true,
+            inertia: Infinity,
+            render: {
+                fillStyle: '#00ff00',
+                opacity: 0.4,
+                //visible: false
+            },
+            collisionFilter:
+            {
+                category: this.enemyThrowFilter,
+                mask: this.playerFilter
+            }
+        });
+
         var chaseConstraint = this.Constraint.create({
             bodyA: enemy1,
             bodyB: chaseCollider,
+            render: {
+                visible: false
+            }
+        });
+
+        var throwConstraint = this.Constraint.create({
+            bodyA: enemy1,
+            bodyB: throwCollider,
             render: {
                 visible: false
             }
@@ -579,6 +612,7 @@ export class PhysicsGame  {
             forceToApply: null,
             hb: enemy1HealthBar,
             chaseCollider: chaseCollider,
+            throwCollider: throwCollider,
             patrol: patrolPath,
             animRate: 5,
             animStep: 0,
@@ -598,6 +632,18 @@ export class PhysicsGame  {
             
         }
 
+        //need a back reference for player collision detection.
+        this.chase_colliders[chaseCollider.id] = {
+            body: chaseCollider,
+            enemyID: enemy1.id
+        }
+
+        //need a back reference for player collision detection.
+        this.throw_colliders[throwCollider.id] = {
+            body: throwCollider,
+            enemyID: enemy1.id
+        }
+
         this.World.add(this.gameWorld,
             [
                 enemy1,
@@ -607,7 +653,9 @@ export class PhysicsGame  {
                 path1Collider,
                 path2Collider,
                 chaseCollider,
-                chaseConstraint
+                throwCollider,
+                chaseConstraint,
+                throwConstraint
             ]);
 
 
@@ -775,7 +823,7 @@ export class PhysicsGame  {
     physicsEvents() {
         this.Events.on(this.mouseconstraint, 'mousemove', (event) => {
             if (this.throwing) {
-                console.log(event);
+                this.log(event);
                 var x = event.mouse.position.x;
                 var y = event.mouse.position.y;
 
@@ -1041,6 +1089,7 @@ export class PhysicsGame  {
             for (var id in this.enemies) {
                 let enemyBody = this.enemies[id].body;
                 let forceNeeded = this.enemies[id].forceNeeded;
+
                 var hb = this.enemies[id].hb;
                 this.Body.applyForce(hb, hb.position, {
                     x: -gravity.x * gravity.scale * hb.mass,
@@ -1050,6 +1099,11 @@ export class PhysicsGame  {
                 this.Body.applyForce(chaseCollider, chaseCollider.position, {
                     x: -gravity.x * gravity.scale * chaseCollider.mass,
                     y: -gravity.y * gravity.scale * chaseCollider.mass
+                });
+                var throwCollider = this.enemies[id].throwCollider;
+                this.Body.applyForce(throwCollider, throwCollider.position, {
+                    x: -gravity.x * gravity.scale * throwCollider.mass,
+                    y: -gravity.y * gravity.scale * throwCollider.mass
                 });
 
                 if (forceNeeded) {
@@ -1170,33 +1224,55 @@ export class PhysicsGame  {
                     } else if (pair.bodyA.collisionFilter.category === this.coinFilter) {
                         this.collect_coin(pair.bodyA.id);
                     }
-                    
+
+                    //enemy chase collider
+                    if (pair.bodyB.collisionFilter.category === this.enemyChaseFilter) {
+                        let enemy = this.enemies[this.chase_colliders[pair.bodyB.id].enemyID];
+                        console.log("will chase");
+
+                    } else if (pair.bodyA.collisionFilter.category === this.enemyChaseFilter) {
+                        let enemy = this.enemies[this.chase_colliders[pair.bodyA.id].enemyID];
+                        console.log("will chase");
+                    }
+
+                    //enemy throw range
+                    if (pair.bodyB.collisionFilter.category === this.enemyThrowFilter) {
+                        let enemy = this.enemies[this.chase_colliders[pair.bodyB.id].enemyID];
+                        console.log("will throw");
+
+                    } else if (pair.bodyA.collisionFilter.category === this.enemyThrowFilter) {
+                        let enemy = this.enemies[this.chase_colliders[pair.bodyA.id].enemyID];
+                        console.log("will throw");
+                    }
 
                 }
 
                 //enemyCollisions
                 if (pair.bodyB.collisionFilter.category === this.enemyFilter || pair.bodyA.collisionFilter.category === this.enemyFilter) {
                     var enemy = (pair.bodyB.collisionFilter.category === this.enemyFilter) ? this.enemies[pair.bodyB.id] : this.enemies[pair.bodyA.id];
-                    if (pair.bodyB.collisionFilter.category === this.patrolFilter || pair.bodyA.collisionFilter.category === this.patrolFilter) {
-                        var patrol_collider = (pair.bodyB.collisionFilter.category === this.patrolFilter) ? pair.bodyB : pair.bodyA;
-                        
-                        //enemy has collided with his patrol zone, we need to update his direction
-                        enemy.patrol.forEach((patrol, index) => {
-                            if (patrol.collisionBody.id === patrol_collider.id) {
-                                enemy.animStep = 0;
-                                switch (enemy.patrol[index].action) {
-                                    case 'left':
-                                        enemy.movement.left = true;
-                                        enemy.movement.right = false;
-                                        break;
-                                    case 'right':
-                                        enemy.movement.right = true;
-                                        enemy.movement.left = false;
-                                        break;
+                    if (!enemy.isChasing) {
+                        if (pair.bodyB.collisionFilter.category === this.patrolFilter || pair.bodyA.collisionFilter.category === this.patrolFilter) {
+                            var patrol_collider = (pair.bodyB.collisionFilter.category === this.patrolFilter) ? pair.bodyB : pair.bodyA;
+
+                            //enemy has collided with his patrol zone, we need to update his direction
+                            enemy.patrol.forEach((patrol, index) => {
+                                if (patrol.collisionBody.id === patrol_collider.id) {
+                                    enemy.animStep = 0;
+                                    switch (enemy.patrol[index].action) {
+                                        case 'left':
+                                            enemy.movement.left = true;
+                                            enemy.movement.right = false;
+                                            break;
+                                        case 'right':
+                                            enemy.movement.right = true;
+                                            enemy.movement.left = false;
+                                            break;
+                                    }
                                 }
-                            }
-                        })
+                            })
+                        }
                     }
+                    
 
                     //hit death.
                     if (pair.bodyB.collisionFilter.category === this.deathFilter || pair.bodyA.collisionFilter.category === this.deathFilter)
@@ -1238,16 +1314,16 @@ export class PhysicsGame  {
                     this.removeProjectile(pair.bodyB);
                 }
 
-                //coin collision
-                if (pair.bodyB.collisionFilter.category === this.coinFilter) {
+                //coin collision for non static coins.
+                if (pair.bodyB.collisionFilter.category === this.coinFilter && this.coins[pair.bodyB.id]) {
+                    console.log('coin[%d] collided with \'%s\'', pair.bodyB.id, pair.bodyA.label);
                     let coin = this.coins[pair.bodyB.id];
-                    if (pair.bodyA.collisionFilter.category === this.groundFilter) {
-                        coin.body.collisionFilter.mask += this.playerFilter;
-                    }
-                } else if (pair.bodyA.collisionFilter.category === this.enemyFilter) {
+                    coin.body.collisionFilter.mask = coin.body.collisionFilter.mask | this.playerFilter;
+
+                } else if (pair.bodyA.collisionFilter.category === this.coinFilter && this.coins[pair.bodyA.id]) {
+                    console.log('coin[%d] collided with \'%s\'', pair.bodyA.id, pair.bodyB.label);
                     let coin = this.coins[pair.bodyA.id];
-                    if (pair.bodyB.collisionFilter.category === this.groundFilter)
-                        coin.body.collisionFilter.mask += this.playerFilter;
+                    coin.body.collisionFilter.mask = coin.body.collisionFilter.mask | this.playerFilter;
                 }
             }
         }.bind(this));
@@ -1491,10 +1567,12 @@ export class PhysicsGame  {
         let hb = enemy.hb;
         let patrol = enemy.patrol
         let chaseCollider = enemy.chaseCollider;
+        let throwCollider = enemy.throwCollider;
         patrol.forEach((patrolInstance) => {
             Matter.Composite.remove(this.gameWorld, patrolInstance.collisionBody);
         })
         Matter.Composite.remove(this.gameWorld, chaseCollider);
+        Matter.Composite.remove(this.gameWorld, throwCollider);
 
         this.log("remove enemy id=%d", body.id);
         Matter.Composite.remove(this.gameWorld, body);
@@ -1579,7 +1657,7 @@ export class PhysicsGame  {
             inertia: Infinity, //Prevent rotation.
             collisionFilter: {
                 category: this.playerFilter,
-                mask: this.groundFilter | this.deathFilter | this.powerupFilter | this.enemy_proj | this.ladderFilter | this.wallFilter | this.chestFilter | this.signFilter | this.coinFilter
+                mask: this.groundFilter | this.deathFilter | this.enemyChaseFilter | this.enemy_proj | this.ladderFilter | this.wallFilter | this.chestFilter | this.signFilter | this.coinFilter
             },
             render: {
                 sprite: {
@@ -1764,9 +1842,10 @@ export class PhysicsGame  {
             let coin = this.Bodies.rectangle(point.x, point.y, 50, 50, {
                 label: "coin",
                 isStatic: false,
+                inertia: Infinity,
                 collisionFilter: {
                     category: this.coinFilter,
-                    mask: this.groundFilter | this.deathFilter
+                    mask: this.groundFilter | this.deathFilter | this.wallFilter
                 },
                 render: {
                     fillStyle: "#7a0a85",
@@ -1804,13 +1883,15 @@ export class PhysicsGame  {
                 clearInterval(this.intervalID);
             
 
-        }, 50);
+        }, 65);
     }
 
     collect_coin(id) {
+        
         this.gold += this.coins[id].count;
         this.sounds.coin();
         this.World.remove(this.gameWorld, this.coins[id].body);
+        console.log("deleting coin[%d]", id);
         delete this.coins[id];
     }
 
@@ -1860,6 +1941,6 @@ export class PhysicsGame  {
     //for removing logging
     log(msg, ...params) {
         if (this.logging)
-            console.log(msg, ...params)
+            this.log(msg, ...params)
     }
 }
