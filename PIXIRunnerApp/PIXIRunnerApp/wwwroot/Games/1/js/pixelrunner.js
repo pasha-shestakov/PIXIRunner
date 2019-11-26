@@ -19,6 +19,11 @@ export class PhysicsGame  {
             _2: 'Owlet_Monster',
             _3: 'Dude_Monster'
         };
+
+    speed = {
+        player_proj: 0.0015,
+        enemy_proj: 0.02
+    }
     character_path;
 
     Engine = Matter.Engine;
@@ -71,8 +76,7 @@ export class PhysicsGame  {
     throw_colliders = {};
 
     life_arr = [];
-
-    projectileGravity = false;
+    
     grounded = true;
 
     throwing = false;
@@ -89,7 +93,7 @@ export class PhysicsGame  {
     defaultFilter = 0x0001;
     playerFilter = 0x0002;
     deathFilter = 0x0004;
-    chaseFilter = 0x0008;
+    enemyChaseFilter = 0x0008;
     player_proj = 0x0010;
     enemy_proj = 0x0020;
     ladderFilter = 0x0040;
@@ -131,6 +135,7 @@ export class PhysicsGame  {
     //delay for pause text on screen when game is paused ms
     pauseFlashDelay = 100;
     overlayActive = false;
+
 
     onLoad(load) {
         this.lives = load.lives;
@@ -399,6 +404,7 @@ export class PhysicsGame  {
 
             
         ]);
+
         for (var id in this.grates) {
             this.World.add(this.gameWorld, this.grates[id].body);
         }
@@ -549,6 +555,7 @@ export class PhysicsGame  {
         var path1Collider = this.Bodies.rectangle(800, 730, 20, 100, { isStatic: true, isSensor: true, render: { fillStyle: '#ff0000', opacity: 0.4, visible: false }, collisionFilter: { category: this.patrolFilter } });
         var path2Collider = this.Bodies.rectangle(1200, 730, 20, 100, { isStatic: true, isSensor: true, render: { fillStyle: '#ff0000', opacity: 0.4, visible: false }, collisionFilter: { category: this.patrolFilter} });
         var chaseCollider = this.Bodies.rectangle(1000, 730, 500, 500, {
+            label: 'throwCollider',
             isStatic: false,
             isSensor: true,
             inertia: Infinity,
@@ -565,11 +572,12 @@ export class PhysicsGame  {
         });
 
         var throwCollider = this.Bodies.rectangle(1000, 730, 250, 250, {
+            label: 'throwCollider',
             isStatic: false,
             isSensor: true,
             inertia: Infinity,
             render: {
-                fillStyle: '#00ff00',
+                fillStyle: '#0000ff',
                 opacity: 0.4,
                 //visible: false
             },
@@ -617,6 +625,8 @@ export class PhysicsGame  {
             animRate: 5,
             animStep: 0,
             animMax: 23,
+            isChasing: false,
+            isThrowing: false,
             hp: {
                 max: 6,
                 current: 6
@@ -862,7 +872,7 @@ export class PhysicsGame  {
                 if (current - this.lastclick > this.throw_rate * 11) {
                     
                     this.throw_position = { x: x_1, y: y_1 };
-                    this.throw_projectile(this.player.body, 'rock', this.throw_position.x + this.gameRender.bounds.min.x, this.throw_position.y + this.gameRender.bounds.min.y);
+                    this.throw_projectile(this.player.body, 'rock', this.throw_position.x + this.gameRender.bounds.min.x, this.throw_position.y + this.gameRender.bounds.min.y, this.speed.player_proj);
                     this.throwing = true;
                     this.lastclick = current;
                 }
@@ -900,23 +910,26 @@ export class PhysicsGame  {
 
         this.Events.on(this.gameEngine, 'beforeUpdate', function () {
             var gravity = this.gameEngine.world.gravity;
-            //this.log(engine);
-            if (!this.projectileGravity) {
-                for (var id in this.projectiles) {
-                    var body = this.projectiles[id];
+
+            for (var id in this.projectiles) {
+                var body = this.projectiles[id].body;
+                if (!this.projectiles[id].gravityAffect) {
+                    
                     this.Body.applyForce(body, body.position, {
                         x: -gravity.x * gravity.scale * body.mass,
                         y: -gravity.y * gravity.scale * body.mass
                     });
-                    if (this.outOfBounds(body))
-                        this.removeProjectile(body);
                 }
+                    
+                if (this.outOfBounds(body))
+                    this.removeProjectile(body);
             }
+            
 
             if (this.throwing) {
                 this.throw_rate--;
                 if (this.throw_rate === 0) {
-                    this.throw_projectile(this.player.body, 'rock', this.throw_position.x + this.gameRender.bounds.min.x, this.throw_position.y + this.gameRender.bounds.min.y);
+                    this.throw_projectile(this.player.body, 'rock', this.throw_position.x + this.gameRender.bounds.min.x, this.throw_position.y + this.gameRender.bounds.min.y, this.speed.player_proj);
                     this.throw_rate = 20;
                 }
             }
@@ -1163,8 +1176,9 @@ export class PhysicsGame  {
 
                 //player collisions
                 if (pair.bodyB.collisionFilter.category === this.playerFilter || pair.bodyA.collisionFilter.category === this.playerFilter) {
+                    let playerBody = (pair.bodyB.collisionFilter.category === this.playerFilter) ? pair.bodyB : pair.bodyA;
                     //mark player as grounded
-                    this.log("collisionStart: (%s, %s):", pair.bodyA.label, pair.bodyB.label);
+                    console.log("collisionStart: (%s, %s):", pair.bodyA.label, pair.bodyB.label);
                     if (pair.bodyB.collisionFilter.category === this.groundFilter || pair.bodyA.collisionFilter.category === this.groundFilter) {
                         this.log("friction 0.1");
                         this.player.body.friction = 0.1;
@@ -1237,12 +1251,14 @@ export class PhysicsGame  {
 
                     //enemy throw range
                     if (pair.bodyB.collisionFilter.category === this.enemyThrowFilter) {
-                        let enemy = this.enemies[this.chase_colliders[pair.bodyB.id].enemyID];
+                        let enemy = this.enemies[this.throw_colliders[pair.bodyB.id].enemyID];
                         console.log("will throw");
+                        this.throw_projectile(enemy.body, 'scythe', playerBody.position.x, playerBody.position.y, this.speed.enemy_proj);
 
                     } else if (pair.bodyA.collisionFilter.category === this.enemyThrowFilter) {
-                        let enemy = this.enemies[this.chase_colliders[pair.bodyA.id].enemyID];
+                        let enemy = this.enemies[this.throw_colliders[pair.bodyA.id].enemyID];
                         console.log("will throw");
+                        this.throw_projectile(enemy.body, 'scythe', playerBody.position.x, playerBody.position.y, this.speed.enemy_proj);
                     }
 
                 }
@@ -1279,7 +1295,7 @@ export class PhysicsGame  {
                         this.log("enemy hit death zone.");
                 }
                 //destroy projectiles based on mask.
-                if (pair.bodyA.collisionFilter.category === this.player_proj) {
+                if (pair.bodyA.collisionFilter.category === this.player_proj || pair.bodyA.collisionFilter.category === this.enemy_proj) {
                     
 
                     if (pair.bodyB.collisionFilter.category === this.enemyFilter) {
@@ -1293,10 +1309,12 @@ export class PhysicsGame  {
                             this.enemies[pair.bodyB.id].forceToApply = { x: -0.04, y: 0 };
 
                         this.hurt_enemy(this.enemies[pair.bodyB.id]);
+                    } else if (pair.bodyB.collisionFilter.category === this.playerFilter) {
+                        this.hurt_player();
                     }
                     this.removeProjectile(pair.bodyA);
                 }
-                else if (pair.bodyB.collisionFilter.category === this.player_proj) {
+                else if (pair.bodyB.collisionFilter.category === this.player_proj || pair.bodyB.collisionFilter.category === this.enemy_proj) {
                     
 
                     if (pair.bodyA.collisionFilter.category === this.enemyFilter) {
@@ -1310,6 +1328,8 @@ export class PhysicsGame  {
                             this.enemies[pair.bodyA.id].forceToApply = { x: -0.04, y: 0 };
 
                         this.hurt_enemy(this.enemies[pair.bodyA.id]);
+                    } else if (pair.bodyA.collisionFilter.category === this.playerFilter) {
+                        this.hurt_player();
                     }
                     this.removeProjectile(pair.bodyB);
                 }
@@ -1657,7 +1677,7 @@ export class PhysicsGame  {
             inertia: Infinity, //Prevent rotation.
             collisionFilter: {
                 category: this.playerFilter,
-                mask: this.groundFilter | this.deathFilter | this.enemyChaseFilter | this.enemy_proj | this.ladderFilter | this.wallFilter | this.chestFilter | this.signFilter | this.coinFilter
+                mask: this.groundFilter | this.deathFilter | this.enemyChaseFilter | this.enemyThrowFilter | this.enemy_proj | this.ladderFilter | this.wallFilter | this.chestFilter | this.signFilter | this.coinFilter
             },
             render: {
                 sprite: {
@@ -1726,7 +1746,7 @@ export class PhysicsGame  {
         }
     }
 
-    throw_projectile(originBody, proj_type, x_1, y_1) {
+    throw_projectile(originBody, proj_type, x_1, y_1, throwspeed) {
         var x_2 = originBody.position.x;
         var y_2 = originBody.position.y;
         this.log("click at world position: (%s,%s)\nplayer at world position: (%s,%s)", x_1, y_1, x_2, y_2);
@@ -1736,7 +1756,6 @@ export class PhysicsGame  {
 
         var v_1 = this.Vector.create(x_1, y_1);
         var v_2 = this.Vector.create(x_2, y_2);
-        var throwspeed = 0.0015;
         let proj;
         if (proj_type === 'rock') {
             proj = this.Bodies.rectangle(x_2, y_2, 5, 5, {
@@ -1746,6 +1765,7 @@ export class PhysicsGame  {
                     mask: this.groundFilter | this.wallFilter | this.deathFilter | this.enemyFilter
                 },
                 isStatic: false,
+                frictionAir: 0,
                 render: {
                     //fillStyle: "#7a0a85",
                     sprite: {
@@ -1753,6 +1773,11 @@ export class PhysicsGame  {
                     }
                 }
             });
+            this.World.add(this.gameWorld, proj);
+            this.projectiles[proj.id] = {
+                body: proj,
+                gravityAffect: false
+            }
 
             if (this.throwAnim === undefined)
                 this.throwAnim = setInterval(this.throwAnimation.bind(this), 60, dir);
@@ -1761,15 +1786,39 @@ export class PhysicsGame  {
                 this.throwAnim = setInterval(this.throwAnimation.bind(this), 60, dir);
             }
 
-        } else if (type === 'scythe') {
+        } else if (proj_type === 'scythe') {
+            this.enemies[originBody.id].isThrowing = true;
 
+            proj = this.Bodies.rectangle(x_2, y_2 - 10, 80, 20, {
+                label: "enemy_proj",
+                collisionFilter: {
+                    category: this.enemy_proj,
+                    mask: this.groundFilter | this.wallFilter | this.deathFilter | this.playerFilter
+                },
+                isStatic: false,
+                frictionAir: 0,
+                render: {
+                    //fillStyle: "#7a0a85",
+                    sprite: {
+                        texture: '/Games/1/images/enemy/projectiles/scythe_' + dir + '.png',
+                        xScale: 0.2,
+                        yScale: 0.2
+                    }
+                }
+            });
+            this.World.add(this.gameWorld, proj);
+            
+            this.projectiles[proj.id] = {
+                body: proj,
+                gravityAffect: false
+            }
         }
 
 
-        this.World.add(this.gameWorld, proj);
-        this.projectiles[proj.id] = proj;
+        
         var angle = this.Vector.angle(v_1, v_2);
         this.log("angle between two points in degrees: %d", (180 * angle / Math.PI) % 360);
+        this.Body.rotate(proj, angle);
         var v_x = -1 * (Math.cos(angle) * throwspeed);
         var v_y = -1 * (Math.sin(angle) * throwspeed);
         this.Body.applyForce(proj, { x: proj.position.x, y: proj.position.y }, { x: v_x, y: v_y });
@@ -1794,7 +1843,7 @@ export class PhysicsGame  {
     pause_game() {
         this.isPaused = true;
         for (var id in this.projectiles) {
-            var body = this.projectiles[id];
+            var body = this.projectiles[id].body;
             body.isStatic = true;
         }
         for (var id in this.falling_rocks) {
@@ -1808,7 +1857,7 @@ export class PhysicsGame  {
     unpause_game() {
         this.isPaused = false;
         for (var id in this.projectiles) {
-            var body = this.projectiles[id];
+            var body = this.projectiles[id].body;
             body.isStatic = false;
         }
         for (var id in this.falling_rocks) {
