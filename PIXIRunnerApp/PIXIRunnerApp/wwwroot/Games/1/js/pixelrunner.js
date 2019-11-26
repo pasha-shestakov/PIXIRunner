@@ -554,7 +554,7 @@ export class PhysicsGame  {
 
         var path1Collider = this.Bodies.rectangle(800, 730, 20, 100, { isStatic: true, isSensor: true, render: { fillStyle: '#ff0000', opacity: 0.4, visible: false }, collisionFilter: { category: this.patrolFilter } });
         var path2Collider = this.Bodies.rectangle(1200, 730, 20, 100, { isStatic: true, isSensor: true, render: { fillStyle: '#ff0000', opacity: 0.4, visible: false }, collisionFilter: { category: this.patrolFilter} });
-        var chaseCollider = this.Bodies.rectangle(1000, 730, 500, 500, {
+        var chaseCollider = this.Bodies.rectangle(1000, 730, 700, 500, {
             label: 'throwCollider',
             isStatic: false,
             isSensor: true,
@@ -562,7 +562,7 @@ export class PhysicsGame  {
             render: {
                 fillStyle: '#00ff00',
                 opacity: 0.4,
-                //visible: false
+                visible: false
             },
             collisionFilter:
             {
@@ -571,7 +571,7 @@ export class PhysicsGame  {
             }
         });
 
-        var throwCollider = this.Bodies.rectangle(1000, 730, 250, 250, {
+        var throwCollider = this.Bodies.rectangle(1000, 730, 500, 250, {
             label: 'throwCollider',
             isStatic: false,
             isSensor: true,
@@ -579,7 +579,7 @@ export class PhysicsGame  {
             render: {
                 fillStyle: '#0000ff',
                 opacity: 0.4,
-                //visible: false
+                visible: false
             },
             collisionFilter:
             {
@@ -627,6 +627,9 @@ export class PhysicsGame  {
             animMax: 23,
             isChasing: false,
             isThrowing: false,
+            isAttacking: false,
+            attackDelay: 0,
+            attackDelayMax: 300,
             hp: {
                 max: 6,
                 current: 6
@@ -1252,13 +1255,17 @@ export class PhysicsGame  {
                     //enemy throw range
                     if (pair.bodyB.collisionFilter.category === this.enemyThrowFilter) {
                         let enemy = this.enemies[this.throw_colliders[pair.bodyB.id].enemyID];
-                        console.log("will throw");
-                        this.throw_projectile(enemy.body, 'scythe', playerBody.position.x, playerBody.position.y, this.speed.enemy_proj);
+                        enemy.isAttacking = true;
+                        if (enemy.attackDelay === 0 || enemy.attackDelay > enemy.attackDelayMax - 100) {
+                            enemy.attackDelay = enemy.attackDelayMax - 50;
+                        }
 
                     } else if (pair.bodyA.collisionFilter.category === this.enemyThrowFilter) {
                         let enemy = this.enemies[this.throw_colliders[pair.bodyA.id].enemyID];
-                        console.log("will throw");
-                        this.throw_projectile(enemy.body, 'scythe', playerBody.position.x, playerBody.position.y, this.speed.enemy_proj);
+                        enemy.isAttacking = true;
+                        if (enemy.attackDelay === 0 || enemy.attackDelay > enemy.attackDelayMax - 100) {
+                            enemy.attackDelay = enemy.attackDelayMax - 50;
+                        }
                     }
 
                 }
@@ -1336,12 +1343,10 @@ export class PhysicsGame  {
 
                 //coin collision for non static coins.
                 if (pair.bodyB.collisionFilter.category === this.coinFilter && this.coins[pair.bodyB.id]) {
-                    console.log('coin[%d] collided with \'%s\'', pair.bodyB.id, pair.bodyA.label);
                     let coin = this.coins[pair.bodyB.id];
                     coin.body.collisionFilter.mask = coin.body.collisionFilter.mask | this.playerFilter;
 
                 } else if (pair.bodyA.collisionFilter.category === this.coinFilter && this.coins[pair.bodyA.id]) {
-                    console.log('coin[%d] collided with \'%s\'', pair.bodyA.id, pair.bodyB.label);
                     let coin = this.coins[pair.bodyA.id];
                     coin.body.collisionFilter.mask = coin.body.collisionFilter.mask | this.playerFilter;
                 }
@@ -1365,6 +1370,31 @@ export class PhysicsGame  {
                     } else if (pair.bodyA.collisionFilter.category === this.chestFilter) {
                         if (this.interact && !this.chests[pair.bodyA.id].isOpen)
                             this.open_chest(pair.bodyA.id);
+                    }
+
+
+                    //enemy throw range
+                    if (pair.bodyB.collisionFilter.category === this.enemyThrowFilter) {
+                        let enemy = this.enemies[this.throw_colliders[pair.bodyB.id].enemyID];
+                        if (enemy.isAttacking) {
+                            if (enemy.attackDelay === enemy.attackDelayMax) {
+                                this.throw_projectile(enemy.body, 'scythe', this.player.body.position.x, this.player.body.position.y, this.speed.enemy_proj);
+                                enemy.attackDelay = 0;
+                            }
+                            enemy.attackDelay++;
+                        }
+                        
+
+                    } else if (pair.bodyA.collisionFilter.category === this.enemyThrowFilter) {
+                        let enemy = this.enemies[this.throw_colliders[pair.bodyA.id].enemyID];
+                        if (enemy.isAttacking) {
+                            if (enemy.attackDelay === enemy.attackDelayMax) {
+                                this.throw_projectile(enemy.body, 'scythe', this.player.body.position.x, this.player.body.position.y, this.speed.enemy_proj);
+                                enemy.attackDelay = 0;
+                            }
+                            enemy.attackDelay++;
+                        }
+                        
                     }
                 }
             }
@@ -1426,6 +1456,15 @@ export class PhysicsGame  {
                         }
                     } else 
                         this.nearLadder = false;
+
+                    //enemy throw range
+                    if (pair.bodyB.collisionFilter.category === this.enemyThrowFilter) {
+                        let enemy = this.enemies[this.throw_colliders[pair.bodyB.id].enemyID];
+                        enemy.isAttacking = false;
+                    } else if (pair.bodyA.collisionFilter.category === this.enemyThrowFilter) {
+                        let enemy = this.enemies[this.throw_colliders[pair.bodyA.id].enemyID];
+                        enemy.isAttacking = false;
+                    }
 
                     if (pair.bodyB.collisionFilter.category == this.signFilter || pair.bodyA.collisionFilter.category == this.signFilter)
                         this.hide_sign();
@@ -1516,24 +1555,27 @@ export class PhysicsGame  {
     }
 
     move(body, direction_type) {
-
-
+        
         if (direction_type === "left") {
             if (body === this.player.body) {
                 if (this.screenXMin > 0 && body.position.x - this.screenXMin < ((2 * this.screenX) / 3)) {
                     this.screenXMin -= 10;
                     this.screenXMax -= 10;
                 }
-            }
-            
-            if (Math.abs(body.velocity.x) <= this.max_velocity) {
-                if (!this.grounded)
-                    this.Body.applyForce(body, { x: body.position.x, y: body.position.y }, { x: -0.01, y: 0 })
-                else {
-                    this.Body.applyForce(body, { x: body.position.x, y: body.position.y }, { x: -0.02, y: 0 })
-                    
-                }
 
+                if (Math.abs(body.velocity.x) <= this.max_velocity) {
+                    if (!this.grounded)
+                        this.Body.applyForce(body, { x: body.position.x, y: body.position.y }, { x: -0.01, y: 0 })
+                    else {
+                        this.Body.applyForce(body, { x: body.position.x, y: body.position.y }, { x: -0.02, y: 0 })
+
+                    }
+
+                }
+            } else {
+                if (Math.abs(body.velocity.x) <= this.max_velocity) {
+                    this.Body.applyForce(body, { x: body.position.x, y: body.position.y }, { x: -0.04, y: 0 });
+                }
             }
         }
         else if (direction_type === "right") {
@@ -1542,16 +1584,22 @@ export class PhysicsGame  {
                     this.screenXMin += 10;
                     this.screenXMax += 10;
                 }
-            }
-            
-            if (Math.abs(body.velocity.x) <= this.max_velocity) {
-                if (!this.grounded)
-                    this.Body.applyForce(body, { x: body.position.x, y: body.position.y }, { x: 0.01, y: 0 })
-                else {
-                    this.Body.applyForce(body, { x: body.position.x, y: body.position.y }, { x: 0.02, y: 0 })
-                    
+
+                if (Math.abs(body.velocity.x) <= this.max_velocity) {
+                    if (!this.grounded)
+                        this.Body.applyForce(body, { x: body.position.x, y: body.position.y }, { x: 0.01, y: 0 })
+                    else {
+                        this.Body.applyForce(body, { x: body.position.x, y: body.position.y }, { x: 0.02, y: 0 })
+
+                    }
+                }
+            } else {
+                if (Math.abs(body.velocity.x) <= this.max_velocity) {
+                    this.Body.applyForce(body, { x: body.position.x, y: body.position.y }, { x: 0.04, y: 0 });
                 }
             }
+            
+            
         } else if (direction_type === "up") {
             //applying upward force on player body.
             this.Body.applyForce(body, { x: body.position.x, y: body.position.y }, { x: 0, y: -0.05 });
