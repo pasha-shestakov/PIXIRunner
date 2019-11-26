@@ -25,13 +25,14 @@ namespace PIXIRunnerApp.Controllers
 
         public JsonResult NewGame(int? id)
         {
-            if (id == null) {
+            if (id == null)
+            {
                 //TODO: return bad request
                 return null;
             }
             int gId = id ?? default(int);
             //TODO: Authorization and authentication
-           var userID = User.Identity.GetUserId();
+            var userID = User.Identity.GetUserId();
 
             var newSavedState = new SaveState() { gameID = gId, userID = userID, checkpoint = 0, character = 3, lives = 3 };
             _context.SaveState.Add(newSavedState);
@@ -51,13 +52,14 @@ namespace PIXIRunnerApp.Controllers
             return new JsonResult(savedState);
         }
 
-        public IActionResult Index() {
+        public IActionResult Index()
+        {
             var games = _context.Game.ToList();
             return View(games);
         }
 
-            // GET: Games
-       public IActionResult GameView(int? id)
+        // GET: Games
+        public IActionResult GameView(int? id)
         {
             if (id == null)
             {
@@ -76,14 +78,17 @@ namespace PIXIRunnerApp.Controllers
         /**
          * UserGameSettings returns the serialized UserGameSetting object that matches id. If one doesn't exist, it is created.
          */
-        public JsonResult UserGameSettings(int? id) {
-            if (id == null) {
+        public JsonResult UserGameSettings(int? id)
+        {
+            if (id == null)
+            {
                 return null;
             }
             int gId = id ?? default(int);
             var userID = User.Identity.GetUserId();
 
-            if (_context.UserGameSettings.Any(s => s.GameID == gId && s.UserID == userID)) {
+            if (_context.UserGameSettings.Any(s => s.GameID == gId && s.UserID == userID))
+            {
                 var gameSettings = _context.UserGameSettings.Where(s => s.GameID == gId && s.UserID == userID).FirstOrDefault();
                 return Json(gameSettings);
             }
@@ -99,8 +104,10 @@ namespace PIXIRunnerApp.Controllers
          * should return bad request.
          * Can somehow bind params to a Object, but not sure how that works so leaving like this.
          */
-        public JsonResult UpdateUserGameSettings(int id, bool soundDisabled, float musicVolume, float soundEffectVolume) {
-            if (_context.UserGameSettings.Any(s => s.ID == id)) {
+        public JsonResult UpdateUserGameSettings(int id, bool soundDisabled, float musicVolume, float soundEffectVolume)
+        {
+            if (_context.UserGameSettings.Any(s => s.ID == id))
+            {
                 var setting = _context.UserGameSettings.Where(s => s.ID == id).FirstOrDefault();
                 setting.SoundDisabled = soundDisabled;
                 setting.MusicVolume = musicVolume;
@@ -108,6 +115,58 @@ namespace PIXIRunnerApp.Controllers
                 _context.UserGameSettings.Update(setting);
                 _context.SaveChanges();
                 return Json(setting);
+            }
+            return null;
+        }
+
+        /**
+         * UserGameState returns the serialized UserGameState object that matches id. If one doesn't exist, it is created.
+         */
+        public JsonResult UserGameState(int? id)
+        {
+            if (id == null)
+            {
+                return null;
+            }
+            int gId = id ?? default(int);
+            var userID = User.Identity.GetUserId();
+
+            if (_context.UserGameState.Any(s => s.GameId == gId && s.UserID == userID))
+            {
+                var gameState = _context.UserGameState.Where(s => s.GameId == gId && s.UserID == userID).FirstOrDefault();
+                return Json(gameState);
+            }
+            var newGameState = new UserGameState()
+            {
+                GameId = gId,
+                UserID = userID,
+                Gold = 0,
+                AmmoAmount = 30,
+                //SelectedSkin = null,
+                //UnlockedSkins = null,
+                MinutesPlayed = 0,
+                Checkpoint = 1,
+            };
+            _context.UserGameState.Add(newGameState);
+            _context.SaveChanges();
+            return Json(newGameState);
+
+        }
+
+        /**
+         * Updates the UserGameState record that matches passed id. This function can be changed to use ids instead of objects. 
+         */
+        public JsonResult UpdateUserGameState(int id, int gold, List<GameSkin> unlockedSkins, GameSkin selectedSkin, int minutesPlayed, int checkpoint)
+        {
+            if (_context.UserGameState.Any(s => s.ID == id))
+            {
+                var gameState = _context.UserGameState.Where(s => s.ID == id).FirstOrDefault();
+                gameState.Gold = gold;
+                gameState.UnlockedSkins = unlockedSkins;
+                gameState.SelectedSkin = selectedSkin;
+                gameState.MinutesPlayed = minutesPlayed;
+                gameState.Checkpoint = checkpoint;
+                return Json(gameState);
             }
             return null;
         }

@@ -76,11 +76,18 @@ function initGameSettings(){
 }
 
 function initGameState() {
-       //$.get("Game/UserGameState", (data) => {
-    //    if (data) {
-
-    //    }
-    //})
+    $.get("/Game/UserGameState?id=" + _gameId, (data) => {
+        if (data) {
+            _userGameState = new UserGameState(
+                data.id,
+                data.gold,
+                data.unlockedSkins,
+                data.selectedSkin,
+                data.minutesPlayed,
+                data.checkpoint
+            );
+        }
+    })
 }
 
 function toggleOverlay(event) {
@@ -91,11 +98,17 @@ function toggleOverlay(event) {
 }
 
 class UserGameState {
-    constructor(gold, skins, selectedSkin, minutesPlayed) {
+    constructor(id, gold, unlockedSkins, selectedSkin, minutesPlayed, checkpoint) {
+        this.id = id;
         this.gold = gold;
-        this.skins = skins;
+        this.unlockedSkins = unlockedSkins;
         this.selectedSkin = selectedSkin;
         this.minutesPlayed = minutesPlayed;
+        this.checkpoint = checkpoint;
+    }
+
+    updateGameState() {
+        $.post("/Game/UpdateUserGameState", this);
     }
 }
 
@@ -106,12 +119,10 @@ class UserGameSettings {
         this.soundDisabled = soundDisabled;
         this.musicVolume = musicVolume;
         this.soundEffectVolume = soundEffectVolume;
-        //this.updateGameSettings();
     }
     toggleDisabledSound() {
         sounds.toggleEnable();
         this.soundDisabled = !this.soundDisabled;
-        //document.getElementById('disabled').value = _userGameSettings.soundDisabled;
         let isDisabled = $('#musicSlider').is(':disabled');
         if (isDisabled) $('#musicSlider').prop('disabled', false); else $('#musicSlider').prop('disabled', true);
 

@@ -3,15 +3,17 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using PIXIRunnerApp.Models;
 
 namespace PIXIRunnerApp.Migrations.Game
 {
     [DbContext(typeof(GameContext))]
-    partial class GameContextModelSnapshot : ModelSnapshot
+    [Migration("20191125021812_Checkpoint")]
+    partial class Checkpoint
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -140,13 +142,13 @@ namespace PIXIRunnerApp.Migrations.Game
 
                     b.Property<int>("MinutesPlayed");
 
-                    b.Property<int?>("SelectedSkinID");
+                    b.Property<int>("SelectedSkinId");
 
                     b.Property<string>("UserID");
 
                     b.HasKey("ID");
 
-                    b.HasIndex("SelectedSkinID");
+                    b.HasIndex("SelectedSkinId");
 
                     b.ToTable("UserGameState");
                 });
@@ -183,7 +185,8 @@ namespace PIXIRunnerApp.Migrations.Game
                 {
                     b.HasOne("PIXIRunnerApp.Models.GameSkin", "SelectedSkin")
                         .WithMany()
-                        .HasForeignKey("SelectedSkinID");
+                        .HasForeignKey("SelectedSkinId")
+                        .OnDelete(DeleteBehavior.Cascade);
                 });
 #pragma warning restore 612, 618
         }
