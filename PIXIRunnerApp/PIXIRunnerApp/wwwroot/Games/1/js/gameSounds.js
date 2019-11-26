@@ -12,19 +12,46 @@
     //sound effects
     soundEffectVolume = 0.10;
     
-    coin_obj = new Audio('/Games/1/sounds/coin.wav');
+    coin_obj = {
+        sound: new Audio('/Games/1/sounds/coin.wav'),
+        scale: 1
+    }
     
-    rock_obj = new Audio('/Games/1/sounds/fall_rock.mp3');
+    rock_obj = {
+        sound: new Audio('/Games/1/sounds/fall_rock.mp3'),
+        scale: .8
+    }
 
-    throw_obj = new Audio('/Games/1/sounds/throw.wav');
+    throw_obj = {
+        sound: new Audio('/Games/1/sounds/throw.wav'),
+        scale: 1
+    }
     
-    spike_obj = new Audio('/Games/1/sounds/spike.wav');
+    spike_obj = {
+        sound: new Audio('/Games/1/sounds/spike.wav'),
+        scale: 1
+    }
 
-    walk = new Audio('/Games/1/sounds/player_walk.wav');
+    walk = {
+        sound: new Audio('/Games/1/sounds/player_walk.wav'),
+        scale: 1
+    }
 
-    oof = new Audio('/Games/1/sounds/oof.wav');
+    oof = {
+        sound: new Audio('/Games/1/sounds/oof.wav'),
+        scale: 1
+    }
 
-    open_menu = new Audio('/Games/1/sounds/menu_open.wav');
+    open_menu = {
+        sound: new Audio('/Games/1/sounds/menu_open.wav'),
+        scale: 1
+    }
+
+    chest = {
+        sound: new Audio('/Games/1/sounds/chest_open.wav'),
+        scale: 1
+    }
+
     //music
     musicVolume = 0.06;
     currentIndex;
@@ -99,9 +126,11 @@
         this.disableSound = false;
     }
 
-    play_sound(sound) {
+    play_sound(obj) {
+        let sound = obj.sound;
         if (!this.disableSound) {
-            sound.volume = this.soundEffectVolume;
+            if (obj == this.rock_obj) console.log('expected: %f, actual: %f', 0.08, (this.soundEffectVolume * obj.scale));
+            sound.volume = this.soundEffectVolume * obj.scale;
             sound.load();
             sound.play();
 
@@ -140,5 +169,9 @@
 
     menu_open() {
         this.play_sound(this.open_menu);
+    }
+
+    open_chest() {
+        this.play_sound(this.chest);
     }
 }

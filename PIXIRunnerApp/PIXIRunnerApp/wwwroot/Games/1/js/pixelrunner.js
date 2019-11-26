@@ -49,6 +49,8 @@ export class PhysicsGame  {
     gameRunner;
     overlayRunner;
 
+    intervalID;
+    coinlaunchArray = [];
 
     player;
     default_spawn = { x: 50, y: 730 };
@@ -744,7 +746,7 @@ export class PhysicsGame  {
 
         for (var i = 0; i < 10; i++) {
             var coin = this.Bodies.rectangle(970 + (i * 50), 750, 50, 50, {
-                label: "coin1",
+                label: "coin",
                 isStatic: true,
                 isSensor: true,
                 collisionFilter: {
@@ -812,7 +814,7 @@ export class PhysicsGame  {
                 if (current - this.lastclick > this.throw_rate * 11) {
                     
                     this.throw_position = { x: x_1, y: y_1 };
-                    this.throw_projectile(this.throw_position.x + this.gameRender.bounds.min.x, this.throw_position.y + this.gameRender.bounds.min.y);
+                    this.throw_projectile(this.player.body, 'rock', this.throw_position.x + this.gameRender.bounds.min.x, this.throw_position.y + this.gameRender.bounds.min.y);
                     this.throwing = true;
                     this.lastclick = current;
                 }
@@ -866,7 +868,7 @@ export class PhysicsGame  {
             if (this.throwing) {
                 this.throw_rate--;
                 if (this.throw_rate === 0) {
-                    this.throw_projectile(this.throw_position.x + this.gameRender.bounds.min.x, this.throw_position.y + this.gameRender.bounds.min.y);
+                    this.throw_projectile(this.player.body, 'rock', this.throw_position.x + this.gameRender.bounds.min.x, this.throw_position.y + this.gameRender.bounds.min.y);
                     this.throw_rate = 20;
                 }
             }
@@ -918,6 +920,7 @@ export class PhysicsGame  {
 
                         //this.Body.translate(body, displacement);
                         this.climbing = true;
+                        this.throwing = false; //disable throwing while climbing.
                     }
                 }
 
@@ -1163,7 +1166,7 @@ export class PhysicsGame  {
 
                     //coin
                     if (pair.bodyB.collisionFilter.category === this.coinFilter) {
-                        this.collect_coin(pair.bodyB.id)
+                        this.collect_coin(pair.bodyB.id);
                     } else if (pair.bodyA.collisionFilter.category === this.coinFilter) {
                         this.collect_coin(pair.bodyA.id);
                     }
@@ -1216,7 +1219,8 @@ export class PhysicsGame  {
                         this.hurt_enemy(this.enemies[pair.bodyB.id]);
                     }
                     this.removeProjectile(pair.bodyA);
-                } else if (pair.bodyB.collisionFilter.category === this.player_proj) {
+                }
+                else if (pair.bodyB.collisionFilter.category === this.player_proj) {
                     
 
                     if (pair.bodyA.collisionFilter.category === this.enemyFilter) {
@@ -1232,6 +1236,18 @@ export class PhysicsGame  {
                         this.hurt_enemy(this.enemies[pair.bodyA.id]);
                     }
                     this.removeProjectile(pair.bodyB);
+                }
+
+                //coin collision
+                if (pair.bodyB.collisionFilter.category === this.coinFilter) {
+                    let coin = this.coins[pair.bodyB.id];
+                    if (pair.bodyA.collisionFilter.category === this.groundFilter) {
+                        coin.body.collisionFilter.mask += this.playerFilter;
+                    }
+                } else if (pair.bodyA.collisionFilter.category === this.enemyFilter) {
+                    let coin = this.coins[pair.bodyA.id];
+                    if (pair.bodyB.collisionFilter.category === this.groundFilter)
+                        coin.body.collisionFilter.mask += this.playerFilter;
                 }
             }
         }.bind(this));
@@ -1311,10 +1327,9 @@ export class PhysicsGame  {
                                 this.log("right of ladder");
                                 this.player.body.render.sprite.texture = '/Games/1/images/player/' + this.character_path + '/R.png';
                             }
-
-
                         }
-                    
+                    } else 
+                        this.nearLadder = false;
 
                     if (pair.bodyB.collisionFilter.category == this.signFilter || pair.bodyA.collisionFilter.category == this.signFilter)
                         this.hide_sign();
@@ -1633,9 +1648,9 @@ export class PhysicsGame  {
         }
     }
 
-    throw_projectile(x_1, y_1) {
-        var x_2 = this.player.body.position.x;
-        var y_2 = this.player.body.position.y;
+    throw_projectile(originBody, proj_type, x_1, y_1) {
+        var x_2 = originBody.position.x;
+        var y_2 = originBody.position.y;
         this.log("click at world position: (%s,%s)\nplayer at world position: (%s,%s)", x_1, y_1, x_2, y_2);
         var dir = 'R';
         if (x_1 < x_2)
@@ -1644,36 +1659,44 @@ export class PhysicsGame  {
         var v_1 = this.Vector.create(x_1, y_1);
         var v_2 = this.Vector.create(x_2, y_2);
         var throwspeed = 0.0015;
-        var rock = this.Bodies.rectangle(x_2, y_2, 5, 5, {
-            label: "player_proj",
-            collisionFilter: {
-                category: this.player_proj,
-                mask: this.groundFilter | this.wallFilter | this.deathFilter | this.enemyFilter
-            },
-            isStatic: false,
-            render: {
-                //fillStyle: "#7a0a85",
-                sprite: {
-                    texture: '/Games/1/images/player/projectiles/Rock.png'
+        let proj;
+        if (proj_type === 'rock') {
+            proj = this.Bodies.rectangle(x_2, y_2, 5, 5, {
+                label: "player_proj",
+                collisionFilter: {
+                    category: this.player_proj,
+                    mask: this.groundFilter | this.wallFilter | this.deathFilter | this.enemyFilter
+                },
+                isStatic: false,
+                render: {
+                    //fillStyle: "#7a0a85",
+                    sprite: {
+                        texture: '/Games/1/images/player/projectiles/Rock.png'
+                    }
                 }
+            });
+
+            if (this.throwAnim === undefined)
+                this.throwAnim = setInterval(this.throwAnimation.bind(this), 60, dir);
+            else {
+                clearInterval(this.throwAnim);
+                this.throwAnim = setInterval(this.throwAnimation.bind(this), 60, dir);
             }
-        });
-        this.World.add(this.gameWorld, rock);
-        this.projectiles[rock.id] = rock;
+
+        } else if (type === 'scythe') {
+
+        }
+
+
+        this.World.add(this.gameWorld, proj);
+        this.projectiles[proj.id] = proj;
         var angle = this.Vector.angle(v_1, v_2);
         this.log("angle between two points in degrees: %d", (180 * angle / Math.PI) % 360);
         var v_x = -1 * (Math.cos(angle) * throwspeed);
         var v_y = -1 * (Math.sin(angle) * throwspeed);
-        if (this.throwAnim === undefined)
-            this.throwAnim = setInterval(this.throwAnimation.bind(this), 60, dir);
-        else {
-            clearInterval(this.throwAnim);
-            this.throwAnim = setInterval(this.throwAnimation.bind(this), 60, dir);
-        }
-
-        this.Body.applyForce(rock, { x: rock.position.x, y: rock.position.y }, { x: v_x, y: v_y });
+        this.Body.applyForce(proj, { x: proj.position.x, y: proj.position.y }, { x: v_x, y: v_y });
         this.sounds.rock_throw();
-        this.log("throwing projectile id=%d", rock.id);
+        this.log("throwing projectile id=%d", proj.id);
     }
 
     removeProjectile(body) {
@@ -1719,20 +1742,69 @@ export class PhysicsGame  {
     }
 
     open_chest(id) {
-        
+        this.sounds.open_chest();
         this.chests[id].body.render.sprite.texture = '/Games/1/images/world/chest_open.png';
         this.chests[id].isOpen = true;
+
         this.chests[id].inventory.forEach((value) => {
             this.log("player recieves: type: " + value.type + " count: " + value.count);
             switch (value.type) {
                 case "gold":
-                    this.gold += value.count;
+                    this.project_gold(value.count, { x: this.chests[id].body.position.x, y: this.chests[id].body.position.y - 10});
                     break;
                 default:
                     this.log("unknown type: '" + value.type + "'");
                     break;
             }
         })
+    }
+
+    project_gold(amount, point) {
+        for (var i = 0; i < amount; i++) {
+            let coin = this.Bodies.rectangle(point.x, point.y, 50, 50, {
+                label: "coin",
+                isStatic: false,
+                collisionFilter: {
+                    category: this.coinFilter,
+                    mask: this.groundFilter | this.deathFilter
+                },
+                render: {
+                    fillStyle: "#7a0a85",
+                    sprite: {
+                        texture: '/Games/1/images/coins/Gold_0.png',
+                        xScale: 0.05,
+                        yScale: 0.05
+                    }
+                }
+            });
+
+            this.coins[coin.id] = {
+                body: coin,
+                count: 1,
+                animation_state: 0,
+            };
+            this.coinlaunchArray.push(coin);
+        }
+        
+        this.intervalID = setInterval(() => {
+            
+            if (this.coinlaunchArray.length > 0) {
+                let coin = this.coinlaunchArray[0];
+                this.World.add(this.gameWorld, coin);
+
+                let speed = 0.1;
+                let randAngle = Math.random() * (698 / 1000) + 1.22173; //between 70 and 110 degrees
+                //apply force to coin from chest.
+                var v_x = -1 * (Math.cos(randAngle) * speed);
+                var v_y = -1 * (Math.sin(randAngle) * speed);
+                this.Body.applyForce(coin, { x: coin.position.x, y: coin.position.y }, { x: v_x, y: v_y });
+
+                this.coinlaunchArray.splice(0, 1);
+            } else
+                clearInterval(this.intervalID);
+            
+
+        }, 50);
     }
 
     collect_coin(id) {
