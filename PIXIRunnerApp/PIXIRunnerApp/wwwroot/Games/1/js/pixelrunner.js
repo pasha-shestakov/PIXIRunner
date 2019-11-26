@@ -1280,7 +1280,6 @@ export class PhysicsGame  {
                     //away from ladder.
                     if (this.climbing) {
                         if (pair.bodyB.collisionFilter.category == this.ladderFilter) {
-
                             this.nearLadder = false;
                             this.climbing = false;
                             this.player.movement.climbUp = false;
@@ -1299,7 +1298,6 @@ export class PhysicsGame  {
 
 
                         } else if (pair.bodyA.collisionFilter.category == this.ladderFilter) {
-
                             this.nearLadder = false;
                             this.climbing = false;
                             this.player.movement.climbUp = false;
@@ -1316,8 +1314,6 @@ export class PhysicsGame  {
 
 
                         }
-                    } else
-                        this.nearLadder = false;
                     
 
                     if (pair.bodyB.collisionFilter.category == this.signFilter || pair.bodyA.collisionFilter.category == this.signFilter)
