@@ -1,27 +1,30 @@
 ﻿@model IEnumerable<PIXIRunnerApp.Models.Game>
-
+@using Microsoft.AspNetCore.Identity
+@inject UserManager<IdentityUser> UserManager
 @{
     ViewData["Title"] = "Games List";
+    var userID = UserManager.GetUserId(User);
 }
 
-    <div class="contain">
-        @foreach (var item in Model)
-        {
-            <div class="game-card">
-                <img class="game-img" src="~/static/images/thumb2.png" />
-                <div class="game-content">
-                    <h6>@item.name</h6>
-                    <p class="game-dis">@item.discription</p>
-                </div>
-                <!-- Source: https://codepen.io/lukemeyrick/pen/qdxqwM/ -->
-                <div class="play-btn">
-                    <a href='/Game/GameView?id=@item.gameID' class='playBut'>
-                        <!-- Generator: Adobe Illustrator 19.0.0, SVG Export Plug-In  -->
-                        <svg version="1.1"
-                             xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:a="http://ns.adobe.com/AdobeSVGViewerExtensions/3.0/"
-                             x="0px" y="0px" width="48px" height="48px" viewBox="0 0 213.7 213.7" enable-background="new 0 0 213.7 213.7"
-                             xml:space="preserve">
-                        <polygon class='triangle' id="XMLID_18_" fill="none" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" points="
+<div class="contain">
+    @foreach (var item in Model)
+    {
+        <div class="game-card">
+            <img class="game-img" src="~/static/images/thumb2.png" />
+            <div class="game-content">
+                <h6>@item.name</h6>
+                <p class="game-dis">@item.discription</p>
+            </div>
+            <!-- Source: https://codepen.io/lukemeyrick/pen/qdxqwM/ -->
+            <div class="play-btn">
+                <a asp-area="" asp-controller="Game" asp-action="GameView" asp-route-id="@item.gameID" asp-route-userID="@userID" class='playBut'>
+
+                <!-- Generator: Adobe Illustrator 19.0.0, SVG Export Plug-In  -->
+                <svg version="1.1"
+                     xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:a="http://ns.adobe.com/AdobeSVGViewerExtensions/3.0/"
+                     x="0px" y="0px" width="48px" height="48px" viewBox="0 0 213.7 213.7" enable-background="new 0 0 213.7 213.7"
+                     xml:space="preserve">
+                <polygon class='triangle' id="XMLID_18_" fill="none" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" points="
 	                73.5,62.5 148.5,105.8 73.5,149.1 " />
 
 
@@ -30,7 +33,119 @@
 
 
 
-                        <circle class='circle' id="XMLID_17_" fill="none" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" cx="106.8" cy="106.8" r="103.3" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                <circle class='circle' id="XMLID_17_" fill="none" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" cx="106.8" cy="106.8" r="103.3" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -39,11 +154,11 @@
 
 
                 </svg>
-                    </a>
-                </div>
-
+                </a>
             </div>
-        }
-    </div>
+
+        </div>
+    }
+</div>
 
 

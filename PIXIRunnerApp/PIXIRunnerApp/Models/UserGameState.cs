@@ -15,6 +15,5 @@ namespace PIXIRunnerApp.Models
         public GameSkin SelectedSkin { get; set; }
         public ICollection<GameSkin> UnlockedSkins { get; set; }
         public int MinutesPlayed { get; set; }
-        public int Checkpoint { get; set; }
     }
 }

@@ -4,11 +4,10 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNet.Identity;
 using System.Security.Principal;
 using Microsoft.AspNetCore.Mvc;
 using PIXIRunnerApp.Models;
+using Microsoft.AspNetCore.Identity;
 
 namespace PIXIRunnerApp.Controllers
 {
@@ -16,10 +15,12 @@ namespace PIXIRunnerApp.Controllers
     public class GameController : Controller
     {
         private readonly GameContext _context;
+        private readonly UserManager<IdentityUser> _userManager;
 
-        public GameController(GameContext context)
+        public GameController(GameContext context, UserManager<IdentityUser> userManager)
         {
             _context = context;
+            _userManager = userManager;
         }
 
 
@@ -32,9 +33,9 @@ namespace PIXIRunnerApp.Controllers
             }
             int gId = id ?? default(int);
             //TODO: Authorization and authentication
-            var userID = User.Identity.GetUserId();
+            var userID = _userManager.GetUserId(User);
 
-            var newSavedState = new SaveState() { gameID = gId, userID = userID, checkpoint = 0, character = 3, lives = 3 };
+            var newSavedState = new SaveState() { gameID = gId, userID = userID, checkpoint = 0, lives = 4, maxLives = 4 };
             _context.SaveState.Add(newSavedState);
             _context.SaveChanges();
             return new JsonResult(newSavedState);
@@ -59,20 +60,28 @@ namespace PIXIRunnerApp.Controllers
         }
 
         // GET: Games
-        public IActionResult GameView(int? id)
+        [Authorize]
+        public IActionResult GameView(int? id, string userID)
         {
-            if (id == null)
+            if (userID != _userManager.GetUserId(User))
             {
-                //TODO: return bad request
-                return null;
+                return Redirect("/Identity/Account/AccessDenied");
+            } else
+            {
+                if (id == null)
+                {
+                    //TODO: return bad request
+                    return null;
+                }
+                var game = _context.Game.Where(g => g.gameID == id).FirstOrDefault();
+                var saves = _context.SaveState.Where(g => g.gameID == id && g.userID == userID).ToList();
+                ViewData["saves"] = saves;
+                if (game == null)
+                    return NotFound();
+                else
+                    return View(game);
             }
-            var game = _context.Game.Where(g => g.gameID == id).FirstOrDefault();
-            var saves = _context.SaveState.Where(g => g.gameID == id).ToList();
-            ViewData["saves"] = saves;
-            if (game == null)
-                return NotFound();
-            else
-                return View(game);
+            
         }
 
         /**
@@ -85,7 +94,7 @@ namespace PIXIRunnerApp.Controllers
                 return null;
             }
             int gId = id ?? default(int);
-            var userID = User.Identity.GetUserId();
+            var userID = _userManager.GetUserId(User);
 
             if (_context.UserGameSettings.Any(s => s.GameID == gId && s.UserID == userID))
             {
@@ -129,7 +138,7 @@ namespace PIXIRunnerApp.Controllers
                 return null;
             }
             int gId = id ?? default(int);
-            var userID = User.Identity.GetUserId();
+            var userID = _userManager.GetUserId(User);
 
             if (_context.UserGameState.Any(s => s.GameId == gId && s.UserID == userID))
             {
@@ -144,28 +153,45 @@ namespace PIXIRunnerApp.Controllers
                 AmmoAmount = 30,
                 //SelectedSkin = null,
                 //UnlockedSkins = null,
-                MinutesPlayed = 0,
-                Checkpoint = 1,
+                MinutesPlayed = 0
             };
             _context.UserGameState.Add(newGameState);
             _context.SaveChanges();
             return Json(newGameState);
 
         }
+        //
+        public JsonResult UpdateSaveState(int saveStateID, string gameID, int userID, int checkpoint, int lives, int maxLives)
+        {
+            var saveState = _context.SaveState.Where(s => s.saveStateID == saveStateID).FirstOrDefault();
+            if (saveState != null)
+            {
+                saveState.lives = lives;
+                saveState.maxLives = maxLives;
+                saveState.checkpoint = checkpoint;
+
+                _context.SaveChanges();
+                return Json(saveState);
+
+            }
+            return null;
+        }
 
         /**
          * Updates the UserGameState record that matches passed id. This function can be changed to use ids instead of objects. 
          */
-        public JsonResult UpdateUserGameState(int id, int gold, List<GameSkin> unlockedSkins, GameSkin selectedSkin, int minutesPlayed, int checkpoint)
+        public JsonResult UpdateUserGameState(int id, int gold, List<GameSkin> unlockedSkins, GameSkin selectedSkin, int minutesPlayed)
         {
-            if (_context.UserGameState.Any(s => s.ID == id))
+            UserGameState gameState = _context.UserGameState.Where(s => s.ID == id).FirstOrDefault();
+
+            if (gameState != null)
             {
-                var gameState = _context.UserGameState.Where(s => s.ID == id).FirstOrDefault();
                 gameState.Gold = gold;
-                gameState.UnlockedSkins = unlockedSkins;
-                gameState.SelectedSkin = selectedSkin;
+                //gameState.UnlockedSkins = unlockedSkins;
+                //gameState.SelectedSkin = selectedSkin;
                 gameState.MinutesPlayed = minutesPlayed;
-                gameState.Checkpoint = checkpoint;
+
+                _context.SaveChanges();
                 return Json(gameState);
             }
             return null;

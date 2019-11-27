@@ -15,6 +15,6 @@ namespace PIXIRunnerApp.Models
 
         public int checkpoint { get; set; }
         public int lives { get; set; }
-        public int character { get; set; }
+        public int maxLives { get; set; }
     }
 }

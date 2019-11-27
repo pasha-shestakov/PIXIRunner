@@ -65,7 +65,7 @@ namespace PIXIRunnerApp.Data
             //we seed all users with some save state.
             foreach (string userID in userIDs)
             {
-                gameContext.SaveState.Add(new SaveState { gameID = 1, userID = userID, checkpoint=0, lives=3, character=3 });
+                gameContext.SaveState.Add(new SaveState { gameID = 1, userID = userID, checkpoint = 0, lives = 4, maxLives = 4 });
             }
             gameContext.SaveChanges();
 }

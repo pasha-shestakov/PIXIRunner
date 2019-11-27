@@ -9,6 +9,7 @@ export class PhysicsGame  {
     
     //db globals
     lives;
+    maxLives;
     checkpoint;
     character;
     gold;
@@ -60,6 +61,7 @@ export class PhysicsGame  {
     player;
     default_spawn = { x: 50, y: 730 };
     player_spawn = this.default_spawn; //default player spawn
+    default_checkpoint;
     isPaused;
     max_velocity = 2;
     num_rocks = 10;
@@ -125,6 +127,7 @@ export class PhysicsGame  {
     
     messageText;
     text_window;
+    loaded = false;
     logging = false;
 
     //settings overlay globals
@@ -137,11 +140,29 @@ export class PhysicsGame  {
     overlayActive = false;
 
 
-    onLoad(load) {
-        this.lives = load.lives;
-        this.checkpoint = load.checkpoint;
-        this.character = load.character;
-        this.gold = 100;
+    timePlayedSess;
+    timePlayedGlobal;
+
+    unlockedSkins;
+
+    _userSaveState;
+    _userGameState;
+
+    onLoad(_userSaveState, _userGameState) {
+        this._userSaveState = _userSaveState;
+        this._userGameState = _userGameState;
+        //related to specific savestate.
+
+        this.lives = _userSaveState.lives;
+        this.maxLives = _userSaveState.maxLives;
+        this.checkpoint = _userSaveState.checkpoint;
+        this.default_checkpoint = this.checkpoint;
+        //global not dependant on game
+        this.gold = _userGameState.gold;
+        this.unlockedSkins = _userGameState.unlockedSkins;
+        this.character = _userGameState.selectedSkin;
+        this.timePlayedGlobal = _userGameState.minutesPlayed;
+        this.timePlayedSess = 0;
     }
 
     preInit() {
@@ -226,7 +247,7 @@ export class PhysicsGame  {
         */
 
         //start bg music
-        this.sounds.start_bg_music(0);
+        
 
         $('#canvasOverlay').on('contextmenu', function () {
             this.log("contextmenu");
@@ -248,9 +269,29 @@ export class PhysicsGame  {
         
         this.initOverlay();
         this.createWorld();
+        this.sounds.start_bg_music(0);
         this.loadPlayers();
+        setInterval(this.incrementTimePlayed.bind(this), 60000); //every minute
         this.physicsEvents();
     }
+
+    incrementTimePlayed() {
+        this.timePlayedGlobal += 1;
+        this._userGameState.minutesPlayed = this.timePlayedGlobal;
+
+        this.timePlayedSess += 1;
+    }
+
+    convertMinToDisplay(minutes) {
+        let hours = Math.floor(minutes / 60);
+        var displayStr = minutes + " minutes";
+        if (hours > 0) {
+            displayStr = hours + " hours " + minutes + " minutes";
+        }
+
+        return displayStr;
+    }
+
     init_player_skin() {
         switch (this.character) {
             case 1:
@@ -274,6 +315,7 @@ export class PhysicsGame  {
             if (sign.checkpointID === this.checkpoint) {
                 this.player_spawn = sign.checkpointSpawn;
                 this.default_spawn = sign.checkpointSpawn;
+                
                 break;
             }
         }
@@ -308,9 +350,8 @@ export class PhysicsGame  {
                 }
             });
 
-
-        var whole = this.lives % 2;
-        var whole_count = Math.floor(this.lives / 2);
+        
+        var whole_count = Math.ceil(this.maxLives / 2);
         for (var i = 0; i < whole_count; i++) {
             this.life_arr.push(
                 this.Bodies.rectangle(35 + (i * 50), 35, 50, 50,
@@ -319,27 +360,13 @@ export class PhysicsGame  {
                         render: {
                             fillStyle: '#ff0000',
                             sprite: {
-                                texture: '/Games/1/images/UI/heart_full.png'
+                                texture: '/Games/1/images/UI/heart_empty.png'
                             }
                         }
                     })
             );
-            if (i === whole_count - 1 && whole !== 0) {
-                i++;
-                this.life_arr.push(
-                    this.Bodies.rectangle(35 + (i * 50), 35, 50, 50,
-                        {
-                            isStatic: true,
-                            render: {
-                                fillStyle: '#ff0000',
-                                sprite: {
-                                    texture: '/Games/1/images/UI/heart_half.png'
-                                }
-                            }
-                        })
-                );
-            }
         }
+        this.sync_health_icons();
 
 
         this.life_arr.forEach(function (body) {
@@ -906,8 +933,15 @@ export class PhysicsGame  {
                 if (this.pauseFlashDelay > 50) {
                     ctx.font = '96px Autobus';
                     ctx.fillText("Paused", (this.screenX / 2) - 115, this.screenY / 2);
+                    
                 } else if (this.pauseFlashDelay === 0)
                     this.pauseFlashDelay = 100;
+
+                ctx.font = '24px Autobus';
+                ctx.fillText("Time Played", 10, 130);
+                ctx.font = '20px Autobus';
+                ctx.fillText(this.convertMinToDisplay(this.timePlayedGlobal) + " - total", 10, 150);
+                ctx.fillText(this.convertMinToDisplay(this.timePlayedSess) + " - current session", 10, 170);
             }
         }.bind(this));
 
@@ -1222,6 +1256,8 @@ export class PhysicsGame  {
                         let sign = this.signs[pair.bodyB.id];
                         if (sign.checkpointID > this.checkpoint) {
                             this.checkpoint = sign.checkpointID;
+                            this._userSaveState.checkpoint = this.checkpoint;
+
                             this.player_spawn = sign.checkpointSpawn;
                         }
 
@@ -1230,6 +1266,8 @@ export class PhysicsGame  {
                         let sign = this.signs[pair.bodyA.id];
                         if (sign.checkpointID > this.checkpoint) {
                             this.checkpoint = sign.checkpointID;
+                            this._userSaveState.checkpoint = this.checkpoint;
+
                             this.player_spawn = sign.checkpointSpawn;
                         }
                         this.show_sign(sign.body.id);
@@ -1479,7 +1517,7 @@ export class PhysicsGame  {
 
             //pause on escape
             if (event.code === 'Escape') {
-                //this.toggle_pause(); //UNDO LATER
+                this.toggle_pause(); //UNDO LATER
             }
 
             //dont pause with inventory open
@@ -1684,16 +1722,19 @@ export class PhysicsGame  {
     hurt_player() {
         //TODO
         this.lives--;
-        
+        this._userSaveState.lives = this.lives;
         if (this.lives == 0) {
-            this.checkpoint = 0;
+            this.checkpoint = this.default_checkpoint;
+            this._userSaveState.checkpoint = this.checkpoint;
             this.player_spawn = this.default_spawn;
             this.respawn();
-            this.lives = 3;
+            this.lives = this.maxLives;
+            this._userSaveState.lives = this.lives;
             this.sync_health_icons();
         } else {
             this.sync_health_icons();
         }
+        this.respawn();
         
     }
 
@@ -1715,7 +1756,6 @@ export class PhysicsGame  {
             }
 
         });
-        this.respawn();
     }
 
     createPlayer() {
@@ -1986,6 +2026,7 @@ export class PhysicsGame  {
     collect_coin(id) {
         
         this.gold += this.coins[id].count;
+        this._userGameState.gold = this.gold;
         this.sounds.coin();
         this.World.remove(this.gameWorld, this.coins[id].body);
         console.log("deleting coin[%d]", id);
@@ -2026,6 +2067,7 @@ export class PhysicsGame  {
         this.player.movement.up = false;
         this.player.movement.climbDown = false;
         this.player.movement.climbUp = false;
+        this.throwing = false;
     }
 
     outOfBounds(body) {

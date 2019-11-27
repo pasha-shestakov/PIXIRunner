@@ -4,52 +4,52 @@ const sounds = new GameSounds();
 const game = new PhysicsGame(sounds);
 game.preInit();
 
+var _userSaveState;
 var _userGameState;
 var _userGameSettings;
 var _gameId;
 $(document).ready(function () {
-    var saves = document.querySelectorAll("#launcher button");
-    _gameId = document.querySelector(".cont").id;
-    saves.forEach((el) => {
-        el.addEventListener("click", (el) => {
-            if (!el.target.id) {
-                console.log("new button");
+    return new Promise((resolve, reject) => {
+        var saves = document.querySelectorAll("#launcher button");
+        _gameId = document.querySelector(".cont").id;
+        saves.forEach((el) => {
+            el.addEventListener("click", (el) => {
+                if (!el.target.id) {
+                    console.log("new button");
+                    $.ajax({
+                        url: "/Game/NewGame?id=" + _gameId,
+                        success: function (response) {
+                            _userSaveState = new UserSaveState(response);
+
+                            initGameState();
+                        }
+                    });
+                    return;
+                }
                 $.ajax({
-                    url: "/Game/NewGame?id="+ _gameId,
+                    url: "/Game/SavedStates?id=" + el.target.id,
                     success: function (response) {
-                        game.onLoad(response);
-                        game.init();
-                        initGameSettings();
+                        _userSaveState = new UserSaveState(response);
                         initGameState();
-                        document.getElementById("launcher").hidden = true;
+
+
                     }
                 });
-                return;
-            }
-            $.ajax({
-                url: "/Game/SavedStates?id=" + el.target.id,
-                success: function (response) {
-                    game.onLoad(response);
-                    game.init();
-                    initGameSettings();
-                    initGameState();
-                    document.getElementById("launcher").hidden = true;
+            })
+        });
 
-                }
-            });
+        $('#closeStoreBtn').click({ name: 'store' }, toggleOverlay);
+        $('#closeSettingsBtn').click({ name: 'settings' }, toggleOverlay);
 
-            //hide launcher buttons.
-            //$('#overlay').css('display', 'none');
+        $('#disabled').on('input', function () { _userGameSettings.toggleDisabledSound() })
+        $('#musicSlider').on('input', function (value) { _userGameSettings.setMusicVolume(value.target.value) });
+        $('#effectsSlider').on('input', function (value) { _userGameSettings.setEffectVolume(value.target.value) });
+        resolve();
 
-        })
+    }).then(() => {
+        initGameSettings();
     });
-
-    $('#closeStoreBtn').click({ name: 'store' }, toggleOverlay);
-    $('#closeSettingsBtn').click({ name: 'settings' }, toggleOverlay);
-
-    $('#disabled').on('input', function () { _userGameSettings.toggleDisabledSound() })
-    $('#musicSlider').on('input', function (value) { _userGameSettings.setMusicVolume(value.target.value) });
-    $('#effectsSlider').on('input', function (value) { _userGameSettings.setEffectVolume(value.target.value) });
+    
 });
 
 function initGameSettings(){
@@ -76,18 +76,37 @@ function initGameSettings(){
 }
 
 function initGameState() {
-    $.get("/Game/UserGameState?id=" + _gameId, (data) => {
-        if (data) {
-            _userGameState = new UserGameState(
-                data.id,
-                data.gold,
-                data.unlockedSkins,
-                data.selectedSkin,
-                data.minutesPlayed,
-                data.checkpoint
-            );
-        }
-    })
+    return new Promise((resolve, reject) => {
+
+        $.get("/Game/UserGameState?id=" + _gameId, (data) => {
+            if (data) {
+                _userGameState = new UserGameState(
+                    data.id,
+                    data.gold,
+                    data.unlockedSkins,
+                    data.selectedSkin,
+                    data.minutesPlayed
+                );
+                resolve();
+            }
+        })
+    }).then(() => {
+        game.onLoad(_userSaveState, _userGameState);
+        game.init();
+        document.getElementById("launcher").hidden = true;
+    });
+    
+}
+
+
+window.onbeforeunload = function () {
+    saveGameAutomatically();
+}
+
+function saveGameAutomatically() {
+
+    _userSaveState.updateSaveState();
+    _userGameState.updateGameState();
 }
 
 function toggleOverlay(event) {
@@ -97,18 +116,33 @@ function toggleOverlay(event) {
     game.overlayActive = false;
 }
 
-class UserGameState {
-    constructor(id, gold, unlockedSkins, selectedSkin, minutesPlayed, checkpoint) {
+class UserGameState { // GLOBAL between all games
+    constructor(id, gold, unlockedSkins, selectedSkin, minutesPlayed) {
         this.id = id;
         this.gold = gold;
         this.unlockedSkins = unlockedSkins;
         this.selectedSkin = selectedSkin;
         this.minutesPlayed = minutesPlayed;
-        this.checkpoint = checkpoint;
     }
 
     updateGameState() {
         $.post("/Game/UpdateUserGameState", this);
+    }
+}
+
+class UserSaveState { // SPECIFIC to a SINGLE game
+    constructor(response) {
+        console.log("HELLO: ", response);
+        this.saveStateID = response.saveStateID;
+        this.gameID = response.gameID;
+        this.userID = response.userID;
+        this.checkpoint = response.checkpoint;
+        this.lives = response.lives;
+        this.maxLives = response.maxLives;
+    }
+
+    updateSaveState() {
+        $.post("/Game/UpdateSaveState", this);
     }
 }
 
