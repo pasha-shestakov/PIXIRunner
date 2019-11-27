@@ -17,7 +17,7 @@ namespace PIXIRunnerApp.Areas.Identity
             builder.ConfigureServices((context, services) => {
                 services.AddDbContext<UserContext>(options =>
                     options.UseSqlServer(
-                        context.Configuration.GetConnectionString("UserContextConnection")));
+                        context.Configuration.GetConnectionString("DefaultConnection")));
 
                 services.AddDefaultIdentity<IdentityUser>(options =>
                 {
