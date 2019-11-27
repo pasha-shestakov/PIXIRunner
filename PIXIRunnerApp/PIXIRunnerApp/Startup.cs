@@ -34,9 +34,14 @@ namespace PIXIRunnerApp
                 options.CheckConsentNeeded = context => true;
                 options.MinimumSameSitePolicy = SameSiteMode.None;
             });
-            
-            services.AddDbContext<UserContext>(options => options.UseSqlServer(Configuration.GetConnectionString("UserContextConnection")));
-            services.AddDbContext<GameContext>(options => options.UseSqlServer(Configuration.GetConnectionString("UserContextConnection")));
+            services.AddDbContext<UserContext>(options => options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection"), builder =>
+            {
+                builder.EnableRetryOnFailure(5, TimeSpan.FromSeconds(10), null);
+            }));
+            services.AddDbContext<GameContext>(options => options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection"), builder =>
+            {
+                builder.EnableRetryOnFailure(5, TimeSpan.FromSeconds(10), null);
+            }));
 
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
 
