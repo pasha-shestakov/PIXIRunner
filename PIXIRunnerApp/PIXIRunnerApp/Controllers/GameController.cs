@@ -61,18 +61,17 @@ namespace PIXIRunnerApp.Controllers
 
         // GET: Games
         [Authorize]
-        public IActionResult GameView(int? id, string userID)
+        public IActionResult GameView(int? id)
         {
-            if (userID != _userManager.GetUserId(User))
+
+            if (id == null)
             {
-                return Redirect("/Identity/Account/AccessDenied");
-            } else
+                //TODO: return bad request
+                return null;
+            }
+            else
             {
-                if (id == null)
-                {
-                    //TODO: return bad request
-                    return null;
-                }
+                var userID = _userManager.GetUserId(User);
                 var game = _context.Game.Where(g => g.gameID == id).FirstOrDefault();
                 var saves = _context.SaveState.Where(g => g.gameID == id && g.userID == userID).ToList();
                 ViewData["saves"] = saves;
