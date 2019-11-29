@@ -8,38 +8,28 @@ a.navbar-brand {
 
 .store_background {
     position: absolute;
-    /* Sit on top of the page content */
     top: 0;
     z-index: 3;
-    /* Specify a stack order in case you're using a different order for other elements */
-    cursor: pointer;
-    /* Add a pointer on hover */
-    padding: 20px;
-    left: 110px;
+    height: 750px;
+    left: 125px;
 }
 
-.store_sprite {
-    z-index: 4;
-    left: 274px;
-    position: absolute;
-    top: 600px;
-    min-width: 90px;
+#gameBody {
+    background: black;
 }
-#gameBody{
-    background:black;
+
+#store_grid {
+    display: flex; /* establish flex container */
+    flex-wrap: wrap; /* enable flex items to wrap */
+    justify-content: space-around;
+    padding-left: 100px;
+    padding-right: 40px;
 }
+
 .closed_door {
+    display: flex;
+    flex-flow: row wrap;
     z-index: 4;
-    left: 274px;
-    position: absolute;
-    top: 575px;
-    transition-delay: 1s;
-}
-
-.closed_door:hover{
-   visibility: hidden;
-    transition: opacity 1s;
-    pointer-events: none;
 }
 
 /* source: https://www.w3schools.com/howto/howto_css_overlay.asp */
@@ -156,7 +146,6 @@ body {
     /*background-color: #6f7075;*/
     background-color: #212227;
     color: white;
-
     -webkit-user-select: none; /* webkit (safari, chrome) browsers */
     -moz-user-select: none; /* mozilla browsers */
     -khtml-user-select: none; /* webkit (konqueror) browsers */

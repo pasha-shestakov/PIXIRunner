@@ -8,6 +8,8 @@ var _userSaveState;
 var _userGameState;
 var _userGameSettings;
 var _gameId;
+var _availibleSprites;
+
 $(document).ready(function () {
     return new Promise((resolve, reject) => {
         var saves = document.querySelectorAll("#launcher button");
@@ -38,6 +40,16 @@ $(document).ready(function () {
             })
         });
 
+        var store = document.getElementById('store_grid');
+        var i;
+        for (i = 0; i < 9; i++) {
+            store.innerHTML += "<img class=\"closed_door\" id=\"door" + i + "\" src=\"/Games/1/images/store/closed_door.png\" />";
+        };
+
+        $('.closed_door').mouseover(showSprite);
+        $('.closed_door').mouseout(hideSprite);
+        $('.closed_door').click(clickedDoor);
+
         $('#closeStoreBtn').click({ name: 'store' }, toggleOverlay);
         $('#closeSettingsBtn').click({ name: 'settings' }, toggleOverlay);
 
@@ -49,10 +61,10 @@ $(document).ready(function () {
     }).then(() => {
         initGameSettings();
     });
-    
+
 });
 
-function initGameSettings(){
+function initGameSettings() {
     $.get("/Game/UserGameSettings?id=" + _gameId, (data) => {
         if (data) {
             _userGameSettings = new UserGameSettings(data.id, data.soundDisabled, data.musicVolume, data.soundEffectVolume);
@@ -63,8 +75,8 @@ function initGameSettings(){
             document.getElementById('disabled').checked = _userGameSettings.soundDisabled;
             let isEnabled = _userGameSettings.soundDisabled
             if (isEnabled) {
-                $('#musicSlider').prop('disabled', true); 
-                $('#effectsSlider').prop('disabled', true); 
+                $('#musicSlider').prop('disabled', true);
+                $('#effectsSlider').prop('disabled', true);
             } else {
                 $('#musicSlider').prop('disabled', false);
                 $('#effectsSlider').prop('disabled', false);
@@ -95,7 +107,7 @@ function initGameState() {
         game.init();
         document.getElementById("launcher").hidden = true;
     });
-    
+
 }
 
 
@@ -114,6 +126,26 @@ function toggleOverlay(event) {
     $('#' + name).toggleClass('show');
     game.toggle_pause();
     game.overlayActive = false;
+}
+
+function initStoreSetup() {
+
+}
+
+function clickedDoor() {
+    // TODO: error checking for non-existent sprites
+}
+
+function showSprite() {
+    // TODO: error checking for non-existent sprites
+    if ($(this).attr('id').charAt(4) < 3) {
+        $(this).attr('src', '/Games/1/images/store/' + $(this).attr('id') + '.png');
+    }
+    
+}
+
+function hideSprite() {
+    $(this).attr('src', '/Games/1/images/store/closed_door.png');
 }
 
 class UserGameState { // GLOBAL between all games
@@ -147,8 +179,7 @@ class UserSaveState { // SPECIFIC to a SINGLE game
 }
 
 class UserGameSettings {
-    constructor(id, soundDisabled, musicVolume, soundEffectVolume)
-    {
+    constructor(id, soundDisabled, musicVolume, soundEffectVolume) {
         this.id = id;
         this.soundDisabled = soundDisabled;
         this.musicVolume = musicVolume;
@@ -175,7 +206,7 @@ class UserGameSettings {
         this.updateGameSettings();
         sounds.set_volume('se', this.soundEffectVolume);
     }
-   
+
     /**
      * updateGameSettings updates the UserGameSettings database record with this
      */
