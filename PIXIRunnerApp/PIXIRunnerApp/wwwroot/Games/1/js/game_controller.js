@@ -68,7 +68,9 @@ function initGameSettings() {
             sounds.set_volume('bg', _userGameSettings.musicVolume);
             sounds.set_enabled(_userGameSettings.soundDisabled);
             //document.getElementById('disabled').value = _userGameSettings.soundDisabled ? 'off' : 'on';
+            
             document.getElementById('disabled').checked = _userGameSettings.soundDisabled;
+            
             let isEnabled = _userGameSettings.soundDisabled
             if (isEnabled) {
                 $('#musicSlider').prop('disabled', true);

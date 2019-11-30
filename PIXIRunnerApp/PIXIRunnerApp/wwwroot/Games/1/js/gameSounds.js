@@ -52,6 +52,16 @@
         scale: 1
     }
 
+    lever = {
+        sound: new Audio('/Games/1/sounds/lever.wav'),
+        scale: 1.3
+    }
+
+    open_door_obj = {
+        sound: new Audio('/Games/1/sounds/open_door.wav'),
+        scale: 1
+    }
+
     //music
     musicVolume = 0.06;
     currentIndex;
@@ -84,13 +94,15 @@
     }
 
     set_volume(type, level) {
-        console.log("setting volume of type: %s to level:%f", type, level)
         if (type === 'bg') { //background
             //will affect all new background music.
             this.musicVolume = level;
-            this.bg.volume = level;
+
+            if (this.bg) this.bg.volume = level;
+
 
         } else if (type === 'se') { //sound effect
+
             //will affect all new sound effects.
             this.soundEffectVolume = level;
             //TODO
@@ -106,7 +118,7 @@
     }
     updateSoundEnabled() {
         if (this.disableSound) {
-            this.bg.volume = 0;
+            if (this.bg) this.bg.volume = 0;
             for (var id in this.playing_sounds) {
                 this.playing_sounds[id].pause();
                 delete this.playing_sounds[id];
@@ -114,7 +126,7 @@
             this.playing_sounds = {};
         }
         else {
-            this.bg.volume = this.musicVolume;
+            if (this.bg) this.bg.volume = this.musicVolume;
         }
     }
     set_enabled(enabled) {
@@ -129,7 +141,6 @@
     play_sound(obj) {
         let sound = obj.sound;
         if (!this.disableSound) {
-            if (obj == this.rock_obj) console.log('expected: %f, actual: %f', 0.08, (this.soundEffectVolume * obj.scale));
             sound.volume = this.soundEffectVolume * obj.scale;
             sound.load();
             sound.play();
@@ -173,5 +184,13 @@
 
     open_chest() {
         this.play_sound(this.chest);
+    }
+
+    pull_lever() {
+        this.play_sound(this.lever);
+    }
+
+    open_door() {
+        this.play_sound(this.open_door_obj);
     }
 }
