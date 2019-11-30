@@ -59,6 +59,9 @@ namespace PIXIRunnerApp.Data
             foreach (Game g in games)
             {
                 gameContext.Game.Add(g);
+                gameContext.GameSkin.Add(new GameSkin() { Name = "Pink Monster", Cost = 0, GameID = g.gameID }); //added default skin for each game.
+                gameContext.GameSkin.Add(new GameSkin() { Name = "Dude Monster", Cost = 100, GameID = g.gameID }); //added default skin for each game.
+                gameContext.GameSkin.Add(new GameSkin() { Name = "Owlet Monster", Cost = 200, GameID = g.gameID }); //added default skin for each game.
             }
             gameContext.SaveChanges();
 
