@@ -40,12 +40,8 @@ $(document).ready(function () {
             })
         });
 
-        var store = document.getElementById('store_grid');
-        var i;
-        for (i = 0; i < 9; i++) {
-            store.innerHTML += "<img class=\"closed_door\" id=\"door" + i + "\" src=\"/Games/1/images/store/closed_door.png\" />";
-        };
-
+        initStoreSetup();
+      
         $('.closed_door').mouseover(showSprite);
         $('.closed_door').mouseout(hideSprite);
         $('.closed_door').click(clickedDoor);
@@ -129,6 +125,18 @@ function toggleOverlay(event) {
 }
 
 function initStoreSetup() {
+    var store = document.getElementById('store_grid');
+    for (var i = 0; i < 7; i++) {
+        store.innerHTML += "<img class=\"closed_door\" id=\"door" + i + "\" src=\"/Games/1/images/store/closed_door.png\" />";
+    };
+    store.innerHTML += "<img id=\"selected_text\" src=\"/Games/1/images/store/select.png\" />";
+
+    // TODO: db query this
+    store.innerHTML += "<img id=\"selected_sprite\" src=\"/Games/1/images/store/door0.png\" />";
+
+}
+
+function showAquired() {
 
 }
 
@@ -141,7 +149,6 @@ function showSprite() {
     if ($(this).attr('id').charAt(4) < 3) {
         $(this).attr('src', '/Games/1/images/store/' + $(this).attr('id') + '.png');
     }
-    
 }
 
 function hideSprite() {
