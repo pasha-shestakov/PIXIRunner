@@ -76,6 +76,8 @@ export class PhysicsGame  {
     falling_rocks = {};
     chase_colliders = {};
     throw_colliders = {};
+    doors = {};
+    levers = {};
 
     life_arr = [];
     
@@ -107,6 +109,10 @@ export class PhysicsGame  {
     enemyFilter = 0x1000;
     patrolFilter = 0x2000;
     enemyThrowFilter = 0x4000;
+    doorFilter = 0x8000;
+    leverFilter = 0x10000;
+
+    nearDoor = false;
 
     nearLadder = false;
     climbing = false;
@@ -419,6 +425,7 @@ export class PhysicsGame  {
         //add signs
         //add coins
         //add player
+        this.generate_doors();
 
         // add bodies
         this.World.add(this.gameWorld, [
@@ -427,11 +434,19 @@ export class PhysicsGame  {
             this.Bodies.polygon(500, 760, 3, 30, { label: "spike", isStatic: true, angle: 1.5708, render: { fillStyle: "#2d9919" }, collisionFilter: { category: this.deathFilter } }), //death triangles
             this.Bodies.polygon(700, 760, 3, 30, { label: "spike", isStatic: true, angle: 1.5708, render: { fillStyle: "#2d9919" }, collisionFilter: { category: this.deathFilter } }), //death triangles
             this.Bodies.rectangle(65, 516, 80, 17, { label: "ground", isStatic: true, render: { fillStyle: "#2d9919" }, collisionFilter: { category: this.groundFilter } }),
-            this.Bodies.rectangle(745, 516, 1200, 17, { label: "ground", isStatic: true, render: { fillStyle: "#2d9919" }, collisionFilter: { category: this.groundFilter } }),
+            this.Bodies.rectangle(1075, 516, 1860, 17, { label: "ground", isStatic: true, render: { fillStyle: "#2d9919" }, collisionFilter: { category: this.groundFilter } }),
 
             
         ]);
+        for (var id in this.doors) {
+            this.World.add(this.gameWorld, this.doors[id].body);
+            this.World.add(this.gameWorld, this.doors[id].indicators);
+            this.World.add(this.gameWorld, this.doors[id].constraint);
 
+            this.generate_levers(id).forEach((lever) => {
+                this.World.add(this.gameWorld, lever);
+            });
+        }
         for (var id in this.grates) {
             this.World.add(this.gameWorld, this.grates[id].body);
         }
@@ -458,6 +473,151 @@ export class PhysicsGame  {
         //this.World.add(this.gameWorld, this.mouseconstraint);
         // keep the mouse in sync with rendering
         this.overlayRender.mouse = this.mouse;
+    }
+
+    generate_doors() {
+        var doorPosition1 = { x: 1550, y: 720 };
+        var door1 = this.Bodies.rectangle(doorPosition1.x, doorPosition1.y, 80, 115,
+            {
+                label: "door1",
+                isStatic: true,
+                isSensor: true,
+                render: {
+                    fillStyle: "#ff0000",
+                    sprite: {
+                        texture: '/Games/1/images/world/door_closed.png',
+                        xScale: 1.75,
+                        yScale: 2
+                    }
+                },
+                collisionFilter: { category: this.doorFilter }
+            })
+
+       
+
+        var indicator1 = this.Bodies.rectangle(doorPosition1.x - 40, doorPosition1.y - 70, 30, 20,
+            {
+                label: "indicator1",
+                isStatic: true,
+                isSensor: true,
+                render: {
+                    fillStyle: "#ff0000",
+                    strokeStyle: "#000000",
+                    lineWidth: 3
+                }
+            })
+        this.Body.rotate(indicator1, -0.5);
+        var indicator2 = this.Bodies.rectangle(doorPosition1.x, doorPosition1.y - 80, 30, 20,
+            {
+                label: "indicator2",
+                isStatic: true,
+                isSensor: true,
+                render: {
+                    fillStyle: "#ff0000",
+                    strokeStyle: "#000000",
+                    lineWidth: 3
+                }
+
+            })
+        var indicator3 = this.Bodies.rectangle(doorPosition1.x + 40, doorPosition1.y - 70, 30, 20,
+            {
+                label: "indicator3",
+                isStatic: true,
+                isSensor: true,
+                render: {
+                    fillStyle: "#ff0000",
+                    strokeStyle: "#000000",
+                    lineWidth: 3
+                }
+            })
+        this.Body.rotate(indicator3, 0.5);
+
+        var doorIndicators = this.Body.create({
+            parts: [indicator1, indicator2, indicator3]
+        });
+
+        var constraint1 = this.Constraint.create({
+            bodyA: door1,
+            bodyB: doorIndicators,
+            render: {
+                visible: false
+            }
+        });
+        this.doors[door1.id] = {
+            body: door1,
+            indicators: doorIndicators,
+            constraint: constraint1,
+            isOpen: false,
+            leversActivated: 0,
+            leversRequired: 3,
+            lever_positions: [
+                { x: 1650, y: 742, grounded: true },
+                { x: 1750, y: 555, grounded: false },
+                { x: 1850, y: 742, grounded: true }
+            ],
+            animStart: false,
+            animStep: 0,
+            animMax: 1,
+            animRate: 10
+
+        }
+    }
+
+    generate_levers(doorID) {
+        var levers = [];
+        var door = this.doors[doorID];
+        door.lever_positions.forEach((leverPos, index) => {
+            var lever;
+            if (leverPos.grounded) {
+                lever = this.Bodies.rectangle(leverPos.x, leverPos.y, 100, 80, {
+                    label: "lever",
+                    isStatic: true,
+                    isSensor: true,
+                    render: {
+                        fillStyle: "#ff0000",
+                        sprite: {
+                            texture: '/Games/1/images/world/lever_0.png',
+                            xScale: 1.7,
+                            yScale: 1.7
+                        }
+                    },
+                    collisionFilter: { category: this.leverFilter, mask: this.defaultFilter | this.playerFilter }
+
+                });
+            } else {
+                lever = this.Bodies.rectangle(leverPos.x, leverPos.y, 100, 80, {
+                    label: "leverU",
+                    isStatic: true,
+                    isSensor: true,
+                    render: {
+                        fillStyle: "#ff0000",
+                        sprite: {
+                            texture: '/Games/1/images/world/lever_U_0.png',
+                            xScale: 1.7,
+                            yScale: 1.7
+                        }
+                    },
+                    collisionFilter: { category: this.leverFilter, mask: this.player_proj }
+
+                });
+
+            }
+
+            levers.push(lever);
+            this.levers[lever.id] = {
+                body: lever,
+                door: door,
+                isActivatable: true,
+                grounded: leverPos.grounded,
+                animStart: false,
+                animStep: 0,
+                animRate: 5,
+                animMax: 2,
+            }
+        });
+
+
+        return levers;
     }
 
     generate_grates() {
@@ -769,8 +929,8 @@ export class PhysicsGame  {
             checkpointSpawn: { x: sign1.position.x, y: sign1.position.y - 20 }
         };
 
-        /* SIGN2 */
-        var sign2 = this.Bodies.rectangle(1885, 755, 50, 50, {
+         //SIGN2 
+        var sign2 = this.Bodies.rectangle(1970, 755, 50, 50, {
             label: "sign2",
             isStatic: true,
             isSensor: true,
@@ -794,7 +954,7 @@ export class PhysicsGame  {
             checkpointID: 2,
             checkpointSpawn: { x: sign2.position.x, y: sign2.position.y - 20 }
         };
-
+        
         
         
     }
@@ -1059,6 +1219,40 @@ export class PhysicsGame  {
                     }
                 }
 
+                for (var id in this.doors) {
+                    var door = this.doors[id];
+
+                    if (door.animStart) {
+                        if (door.animStep % door.animRate === 0) {
+                            door.body.render.sprite.texture = '/Games/1/images/world/door_open' + door.animStep / door.animRate + '.png';
+                        }
+                        door.animStep++;
+                        if (door.animStep > door.animRate * door.animMax) {
+                            door.animStep = 0;
+                            door.animStart = false;
+                            //console.log('player teleported');
+                        }
+                    }
+                }
+
+                for (var id in this.levers) {
+                    var lever = this.levers[id];
+
+                    if (lever.animStart) {
+                        if (lever.animStep % lever.animRate === 0) {
+                            let animID = lever.animStep / lever.animRate;
+                            lever.body.render.sprite.texture = (lever.grounded) ? '/Games/1/images/world/lever_' + animID + '.png' : '/Games/1/images/world/lever_U_' + animID + '.png';
+                            
+                        }
+                        lever.animStep++;
+                        if (lever.animStep > lever.animRate * lever.animMax) {
+                            lever.animStep = 0;
+                            lever.animStart = false;
+                            //console.log('lever activated');
+                        }
+                    }
+                }
+
                 for (var id in this.grates) {
                     var grate = this.grates[id];
                     if (grate.opening)
@@ -1194,7 +1388,7 @@ export class PhysicsGame  {
 
             for (var i = 0, j = pairs.length; i != j; ++i) {
                 var pair = pairs[i];
-                //this.log("collisionSTART: (" + pair.bodyA.label + ", " + pair.bodyB.label + ")");
+                this.log("collisionSTART: (" + pair.bodyA.label + ", " + pair.bodyB.label + ")");
 
 
                 //falling rock destroy animation.
@@ -1215,7 +1409,7 @@ export class PhysicsGame  {
                 if (pair.bodyB.collisionFilter.category === this.playerFilter || pair.bodyA.collisionFilter.category === this.playerFilter) {
                     let playerBody = (pair.bodyB.collisionFilter.category === this.playerFilter) ? pair.bodyB : pair.bodyA;
                     //mark player as grounded
-                    console.log("collisionStart: (%s, %s):", pair.bodyA.label, pair.bodyB.label);
+                    this.log("collisionStart: (%s, %s):", pair.bodyA.label, pair.bodyB.label);
                     if (pair.bodyB.collisionFilter.category === this.groundFilter || pair.bodyA.collisionFilter.category === this.groundFilter) {
                         this.log("friction 0.1");
                         this.player.body.friction = 0.1;
@@ -1283,11 +1477,11 @@ export class PhysicsGame  {
                     //enemy chase collider
                     if (pair.bodyB.collisionFilter.category === this.enemyChaseFilter) {
                         let enemy = this.enemies[this.chase_colliders[pair.bodyB.id].enemyID];
-                        console.log("will chase");
+                        this.log("will chase");
 
                     } else if (pair.bodyA.collisionFilter.category === this.enemyChaseFilter) {
                         let enemy = this.enemies[this.chase_colliders[pair.bodyA.id].enemyID];
-                        console.log("will chase");
+                        this.log("will chase");
                     }
 
                     //enemy throw range
@@ -1339,6 +1533,19 @@ export class PhysicsGame  {
                     if (pair.bodyB.collisionFilter.category === this.deathFilter || pair.bodyA.collisionFilter.category === this.deathFilter)
                         this.log("enemy hit death zone.");
                 }
+
+                //projectile hits lever
+                if (pair.bodyA.collisionFilter.category === this.player_proj || pair.bodyB.collisionFilter.category === this.player_proj) {
+                    if (pair.bodyB.collisionFilter.category === this.leverFilter) {
+                        this.activate_lever(pair.bodyB.id);
+                    } else if (pair.bodyA.collisionFilter.category === this.leverFilter) {
+                        this.activate_lever(pair.bodyA.id);
+                    }
+
+
+                    
+                }
+
                 //destroy projectiles based on mask.
                 if (pair.bodyA.collisionFilter.category === this.player_proj || pair.bodyA.collisionFilter.category === this.enemy_proj) {
                     
@@ -1410,6 +1617,25 @@ export class PhysicsGame  {
                             this.open_chest(pair.bodyA.id);
                     }
 
+                    //nearDoor
+                    if (pair.bodyB.collisionFilter.category === this.doorFilter) {
+                        let door = this.doors[pair.bodyB.id]
+                        if (this.interact && door.leversActivated === door.leversRequired)
+                            this.open_door(pair.bodyB.id);
+                    } else if (pair.bodyA.collisionFilter.category === this.doorFilter) {
+                        let door = this.doors[pair.bodyA.id]
+                        if (this.interact && door.leversActivated === door.leversRequired)
+                            this.open_door(pair.bodyA.id);
+                    }
+
+                    //nearLever
+                    if (pair.bodyB.collisionFilter.category === this.leverFilter) {
+                        if (this.interact)
+                            this.activate_lever(pair.bodyB.id);
+                    } else if (pair.bodyA.collisionFilter.category === this.leverFilter) {
+                        if (this.interact)
+                            this.activate_lever(pair.bodyA.id);
+                    }
 
                     //enemy throw range
                     if (pair.bodyB.collisionFilter.category === this.enemyThrowFilter) {
@@ -1449,7 +1675,7 @@ export class PhysicsGame  {
 
                 //player collisions
                 if (pair.bodyA.collisionFilter.category === this.playerFilter || pair.bodyB.collisionFilter.category === this.playerFilter) {
-                    
+                    this.interact = false;
                     //we are no longer on the ground.
                     if (pair.bodyA.collisionFilter.category == this.groundFilter || pair.bodyB.collisionFilter.category == this.groundFilter) {
                         this.grounded = false;
@@ -1765,7 +1991,7 @@ export class PhysicsGame  {
             inertia: Infinity, //Prevent rotation.
             collisionFilter: {
                 category: this.playerFilter,
-                mask: this.groundFilter | this.deathFilter | this.enemyChaseFilter | this.enemyThrowFilter | this.enemy_proj | this.ladderFilter | this.wallFilter | this.chestFilter | this.signFilter | this.coinFilter
+                mask: this.groundFilter | this.deathFilter | this.enemyChaseFilter | this.enemyThrowFilter | this.enemy_proj | this.ladderFilter | this.wallFilter | this.chestFilter | this.signFilter | this.coinFilter | this.doorFilter | this.leverFilter
             },
             render: {
                 sprite: {
@@ -1850,7 +2076,7 @@ export class PhysicsGame  {
                 label: "player_proj",
                 collisionFilter: {
                     category: this.player_proj,
-                    mask: this.groundFilter | this.wallFilter | this.deathFilter | this.enemyFilter
+                    mask: this.groundFilter | this.wallFilter | this.deathFilter | this.enemyFilter | this.leverFilter
                 },
                 isStatic: false,
                 frictionAir: 0,
@@ -1974,6 +2200,31 @@ export class PhysicsGame  {
         })
     }
 
+    open_door(id) {
+        if (this.doors[id].isOpen) {
+            //go through door
+            console.log("door is open");
+        } else {
+            //open door
+            console.log("opening door");
+            this.doors[id].animStart = true;
+            this.doors[id].isOpen = true;
+        }
+    }
+
+    activate_lever(id) {
+        var lever = this.levers[id];
+        var associatedDoor = lever.door;
+
+        if (lever.isActivatable && !associatedDoor.isOpen) {
+            associatedDoor.leversActivated++;
+            lever.isActivatable = false;
+            lever.animStart = true;
+            associatedDoor.indicators.parts[associatedDoor.leversActivated].render.fillStyle = '#00ff00';
+        }
+
+    }
+
     project_gold(amount, point) {
         for (var i = 0; i < amount; i++) {
             let coin = this.Bodies.rectangle(point.x, point.y, 50, 50, {
@@ -2029,7 +2280,7 @@ export class PhysicsGame  {
         this._userGameState.gold = this.gold;
         this.sounds.coin();
         this.World.remove(this.gameWorld, this.coins[id].body);
-        console.log("deleting coin[%d]", id);
+        this.log("deleting coin[%d]", id);
         delete this.coins[id];
     }
 
