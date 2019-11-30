@@ -36,18 +36,21 @@
         </div>
     </div>
 
-    <div id="overlay">
-        <div id="launcher">
-            <button> New Game</button>
+    <div id="launcher" class="_overlay">
 
+        <select id="save_states">
+            <option value="0">New Game</option>
             @if (saves != null)
             {
                 @foreach (var save in saves)
                 {
-                    <button id="@save.saveStateID">Load Save @save.saveStateID</button>
+                    <option value="@save.saveStateID">Load Save @save.saveStateID</option>
                 }
             }
-        </div>
+        </select>
+        <button id="play">Play</button>
+            
+        
     </div>
 </div>
 

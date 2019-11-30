@@ -80,7 +80,9 @@ a.navbar-brand {
     right: 10px;
     z-index: 4;
 }
-
+#launcher {
+    display: block;
+}
 /*Settings menu sliders */
 .slider-cont {
     display: grid;
