@@ -80,7 +80,7 @@ namespace PIXIRunnerApp.Controllers
                 else
                     return View(game);
             }
-            
+
         }
 
         /**
@@ -88,10 +88,12 @@ namespace PIXIRunnerApp.Controllers
          */
         public JsonResult UserGameSettings(int? id)
         {
+
             if (id == null)
             {
                 return null;
             }
+
             int gId = id ?? default(int);
             var userID = _userManager.GetUserId(User);
 

@@ -8,7 +8,6 @@ var _userSaveState;
 var _userGameState;
 var _userGameSettings;
 var _gameId;
-var _availibleSprites;
 
 $(document).ready(function () {
     return new Promise((resolve, reject) => {
@@ -41,7 +40,7 @@ $(document).ready(function () {
         });
 
         initStoreSetup();
-      
+
         $('.closed_door').mouseover(showSprite);
         $('.closed_door').mouseout(hideSprite);
         $('.closed_door').click(clickedDoor);
@@ -136,16 +135,11 @@ function initStoreSetup() {
 
 }
 
-function showAquired() {
-
-}
-
 function clickedDoor() {
     // TODO: error checking for non-existent sprites
 }
 
 function showSprite() {
-    // TODO: error checking for non-existent sprites
     if ($(this).attr('id').charAt(4) < 3) {
         $(this).attr('src', '/Games/1/images/store/' + $(this).attr('id') + '.png');
     }
