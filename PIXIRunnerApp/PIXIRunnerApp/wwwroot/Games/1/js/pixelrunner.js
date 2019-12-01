@@ -2207,6 +2207,7 @@ export class PhysicsGame  {
         } else {
             //open door
             console.log("opening door");
+            this.sounds.open_door();
             this.doors[id].animStart = true;
             this.doors[id].isOpen = true;
         }
@@ -2219,6 +2220,7 @@ export class PhysicsGame  {
         if (lever.isActivatable && !associatedDoor.isOpen) {
             associatedDoor.leversActivated++;
             lever.isActivatable = false;
+            this.sounds.pull_lever();
             lever.animStart = true;
             associatedDoor.indicators.parts[associatedDoor.leversActivated].render.fillStyle = '#00ff00';
         }

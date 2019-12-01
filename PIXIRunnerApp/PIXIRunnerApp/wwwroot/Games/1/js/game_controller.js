@@ -8,56 +8,60 @@ var _userSaveState;
 var _userGameState;
 var _userGameSettings;
 var _gameId;
+var _availibleSprites;
+
+var currentSelection = 0;
 
 $(document).ready(function () {
-    return new Promise((resolve, reject) => {
-        var saves = document.querySelectorAll("#launcher button");
-        _gameId = document.querySelector(".cont").id;
-        saves.forEach((el) => {
-            el.addEventListener("click", (el) => {
-                if (!el.target.id) {
-                    console.log("new button");
-                    $.ajax({
-                        url: "/Game/NewGame?id=" + _gameId,
-                        success: function (response) {
-                            _userSaveState = new UserSaveState(response);
 
-                            initGameState();
-                        }
-                    });
-                    return;
+    _gameId = document.querySelector(".cont").id;
+    $('#play').click((el) => {
+        if (currentSelection === 0) {
+            console.log("new button");
+            $.ajax({
+                url: "/Game/NewGame?id=" + _gameId,
+                success: function (response) {
+                    _userSaveState = new UserSaveState(response);
+
+                    initGameState();
                 }
-                $.ajax({
-                    url: "/Game/SavedStates?id=" + el.target.id,
-                    success: function (response) {
-                        _userSaveState = new UserSaveState(response);
-                        initGameState();
+            });
+        } else {
+            $.ajax({
+                url: "/Game/SavedStates?id=" + currentSelection,
+                success: function (response) {
+                    _userSaveState = new UserSaveState(response);
+                    initGameState();
 
 
-                    }
-                });
-            })
-        });
+                }
+            });
+        }
 
-        initStoreSetup();
 
-        $('.closed_door').mouseover(showSprite);
-        $('.closed_door').mouseout(hideSprite);
-        $('.closed_door').click(clickedDoor);
-
-        $('#closeStoreBtn').click({ name: 'store' }, toggleOverlay);
-        $('#closeSettingsBtn').click({ name: 'settings' }, toggleOverlay);
-
-        $('#disabled').on('input', function () { _userGameSettings.toggleDisabledSound() })
-        $('#musicSlider').on('input', function (value) { _userGameSettings.setMusicVolume(value.target.value) });
-        $('#effectsSlider').on('input', function (value) { _userGameSettings.setEffectVolume(value.target.value) });
-        resolve();
-
-    }).then(() => {
-        initGameSettings();
     });
 
+    initStoreSetup();
+      
+    $('.closed_door').mouseover(showSprite);
+    $('.closed_door').mouseout(hideSprite);
+    $('.closed_door').click(clickedDoor);
+
+    $('#closeStoreBtn').click({ name: 'store' }, toggleOverlay);
+    $('#closeSettingsBtn').click({ name: 'settings' }, toggleOverlay);
+
+    $('#disabled').on('input', function () { _userGameSettings.toggleDisabledSound() })
+    $('#musicSlider').on('input', function (value) { _userGameSettings.setMusicVolume(value.target.value) });
+    $('#effectsSlider').on('input', function (value) { _userGameSettings.setEffectVolume(value.target.value) });
+    initGameSettings();
+
+    $("#save_states").change(function () {
+        currentSelection = $("#save_states").val();
+        console.log(currentSelection);
+    });
 });
+
+
 
 function initGameSettings() {
     $.get("/Game/UserGameSettings?id=" + _gameId, (data) => {
@@ -67,7 +71,9 @@ function initGameSettings() {
             sounds.set_volume('bg', _userGameSettings.musicVolume);
             sounds.set_enabled(_userGameSettings.soundDisabled);
             //document.getElementById('disabled').value = _userGameSettings.soundDisabled ? 'off' : 'on';
+            
             document.getElementById('disabled').checked = _userGameSettings.soundDisabled;
+            
             let isEnabled = _userGameSettings.soundDisabled
             if (isEnabled) {
                 $('#musicSlider').prop('disabled', true);
@@ -100,7 +106,7 @@ function initGameState() {
     }).then(() => {
         game.onLoad(_userSaveState, _userGameState);
         game.init();
-        document.getElementById("launcher").hidden = true;
+        document.getElementById("launcher").style.display = "none";
     });
 
 }
@@ -135,11 +141,16 @@ function initStoreSetup() {
 
 }
 
+function showAquired() {
+
+}
+
 function clickedDoor() {
     // TODO: error checking for non-existent sprites
 }
 
 function showSprite() {
+    // TODO: error checking for non-existent sprites
     if ($(this).attr('id').charAt(4) < 3) {
         $(this).attr('src', '/Games/1/images/store/' + $(this).attr('id') + '.png');
     }
