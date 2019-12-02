@@ -30,6 +30,10 @@ a.navbar-brand {
     padding-right: 40px;
 }
 
+#skinTesting{
+    display: none;
+}
+
 .closed_door {
     display: flex;
     flex-flow: row wrap;

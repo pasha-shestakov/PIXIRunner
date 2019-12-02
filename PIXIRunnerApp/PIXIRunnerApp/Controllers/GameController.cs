@@ -138,26 +138,38 @@ namespace PIXIRunnerApp.Controllers
             }
             int gId = id ?? default(int);
             var userID = _userManager.GetUserId(User);
-
-            if (_context.UserGameState.Any(s => s.GameId == gId && s.UserID == userID))
+            var gameState = _context.UserGameState.Where(s => s.GameId == gId && s.UserID == userID).FirstOrDefault();
+            if (gameState != null)
             {
-                var gameState = _context.UserGameState.Where(s => s.GameId == gId && s.UserID == userID).FirstOrDefault();
                 return Json(gameState);
-            }
-            //var selectedSkin = _context.GameSkin.Where(skin => skin.Name == "Pink Monster").FirstOrDefault(); //default selected skin for a user who hasn't ever played this game.
-            var newGameState = new UserGameState()
+            } else
             {
-                GameId = gId,
-                UserID = userID,
-                Gold = 0,
-                AmmoAmount = 30,
-                //SelectedSkin = selectedSkin,
-                //UnlockedSkins = new List<GameSkin> { selectedSkin },
-                MinutesPlayed = 0
-            };
-            _context.UserGameState.Add(newGameState);
-            _context.SaveChanges();
-            return Json(newGameState);
+                //user has not played this game before, we need to set up some default data for them.
+
+                //default selected skin for a user who hasn't ever played this game.
+                var selectedSkin = _context.GameSkin.Where(skin => skin.Name == "Pink Monster" && skin.GameID == gId).FirstOrDefault();
+
+                
+                //create new gamestate for new user.
+                var newGameState = new UserGameState()
+                {
+                    GameId = gId,
+                    UserID = userID,
+                    Gold = 0,
+                    AmmoAmount = 30,
+                    SelectedSkinID = selectedSkin.ID,
+                    MinutesPlayed = 0
+                };
+                _context.UserGameState.Add(newGameState);
+                _context.SaveChanges();
+
+                //add default selected skin to unlocked skins for new user.
+                _context.UserUnlockedSkins.Add(new UserUnlockedSkins { userGameStateID = newGameState.ID, skinID = selectedSkin.ID });
+                _context.SaveChanges();
+
+                return Json(newGameState);
+            }
+            
 
         }
         //
@@ -180,15 +192,15 @@ namespace PIXIRunnerApp.Controllers
         /**
          * Updates the UserGameState record that matches passed id. This function can be changed to use ids instead of objects. 
          */
-        public JsonResult UpdateUserGameState(int id, int gold, List<GameSkin> unlockedSkins, GameSkin selectedSkin, int minutesPlayed)
+        public JsonResult UpdateUserGameState(int id, int gold, int ammoAmount, int selectedSkinID, int minutesPlayed)
         {
             UserGameState gameState = _context.UserGameState.Where(s => s.ID == id).FirstOrDefault();
 
             if (gameState != null)
             {
                 gameState.Gold = gold;
-                //gameState.UnlockedSkins = unlockedSkins;
-                //gameState.SelectedSkin = selectedSkin;
+                gameState.AmmoAmount = ammoAmount;
+                gameState.SelectedSkinID = selectedSkinID;
                 gameState.MinutesPlayed = minutesPlayed;
 
                 _context.SaveChanges();
