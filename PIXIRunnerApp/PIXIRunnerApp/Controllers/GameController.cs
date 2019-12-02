@@ -146,15 +146,15 @@ namespace PIXIRunnerApp.Controllers
                 var gameState = _context.UserGameState.Where(s => s.GameId == gId && s.UserID == userID).FirstOrDefault();
                 return Json(gameState);
             }
-            var selectedSkin = _context.GameSkin.Where(skin => skin.Name == "Pink Monster").FirstOrDefault(); //default selected skin for a user who hasn't ever played this game.
+            //var selectedSkin = _context.GameSkin.Where(skin => skin.Name == "Pink Monster").FirstOrDefault(); //default selected skin for a user who hasn't ever played this game.
             var newGameState = new UserGameState()
             {
                 GameId = gId,
                 UserID = userID,
                 Gold = 0,
                 AmmoAmount = 30,
-                SelectedSkin = selectedSkin,
-                UnlockedSkins = new List<GameSkin> { selectedSkin },
+                //SelectedSkin = selectedSkin,
+                //UnlockedSkins = new List<GameSkin> { selectedSkin },
                 MinutesPlayed = 0
             };
             _context.UserGameState.Add(newGameState);
@@ -189,8 +189,8 @@ namespace PIXIRunnerApp.Controllers
             if (gameState != null)
             {
                 gameState.Gold = gold;
-                gameState.UnlockedSkins = unlockedSkins;
-                gameState.SelectedSkin = selectedSkin;
+                //gameState.UnlockedSkins = unlockedSkins;
+                //gameState.SelectedSkin = selectedSkin;
                 gameState.MinutesPlayed = minutesPlayed;
 
                 _context.SaveChanges();
