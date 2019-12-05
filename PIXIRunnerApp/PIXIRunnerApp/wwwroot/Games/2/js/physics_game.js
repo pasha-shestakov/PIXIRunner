@@ -149,8 +149,6 @@ export class PhysicsGame {
     timePlayedSess;
     timePlayedGlobal;
 
-    unlockedSkins;
-
     _userSaveState;
     _userGameState;
 
@@ -165,8 +163,7 @@ export class PhysicsGame {
         this.default_checkpoint = this.checkpoint;
         //global not dependant on game
         this.gold = _userGameState.gold;
-        this.unlockedSkins = _userGameState.unlockedSkins;
-        this.character = _userGameState.selectedSkin;
+        this.character = _userGameState.selectedSkinID;
         this.timePlayedGlobal = _userGameState.minutesPlayed;
         this.timePlayedSess = 0;
     }
@@ -241,7 +238,7 @@ export class PhysicsGame {
     } d
 
     init() {
-        this.init_player_skin();
+        this.sync_player_skin(this.character);
 
 
         /*
@@ -298,15 +295,15 @@ export class PhysicsGame {
         return displayStr;
     }
 
-    init_player_skin() {
-        switch (this.character) {
-            case 1:
+    sync_player_skin(character) {
+        switch (character) {
+            case 4:
                 this.character_path = this.character_paths._1;
                 break;
-            case 2:
+            case 5:
                 this.character_path = this.character_paths._2;
                 break;
-            case 3:
+            case 6:
                 this.character_path = this.character_paths._3;
                 break;
             default:

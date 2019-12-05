@@ -15,6 +15,24 @@ var currentSelection = 0;
 $(document).ready(function () {
 
     _gameId = document.querySelector(".cont").id;
+    $('#selectSkin').click(function (e) {
+        e.preventDefault();
+        let id = $('#selectedIDInput').val();
+        console.log("selecting skin: ", id);
+        selectSkin(id);
+    })
+    $('#getSkins').click(function (e) {
+        e.preventDefault();
+        console.log("getting available skins...");
+        getAvailableSkins();
+    })
+    $('#unlockSkin').click(function (e) {
+        e.preventDefault();
+        let id = $('#skinIDInput').val();
+        console.log("unlocking skin: ", id);
+        unlockSkin(id);
+    })
+
     $('#play').click((el) => {
         if (currentSelection === 0) {
             console.log("new button");
@@ -23,7 +41,9 @@ $(document).ready(function () {
                 success: function (response) {
                     _userSaveState = new UserSaveState(response);
 
-                    initGameState();
+                    initGameState().then(function () {
+                        $('#skinTesting').css('display', 'block');
+                    });
                 }
             });
         } else {
@@ -31,7 +51,9 @@ $(document).ready(function () {
                 url: "/Game/SavedStates?id=" + currentSelection,
                 success: function (response) {
                     _userSaveState = new UserSaveState(response);
-                    initGameState();
+                    initGameState().then(function () {
+                        $('#skinTesting').css('display', 'block');
+                    });
 
 
                 }
@@ -96,8 +118,8 @@ function initGameState() {
                 _userGameState = new UserGameState(
                     data.id,
                     data.gold,
-                    data.unlockedSkins,
-                    data.selectedSkin,
+                    data.ammoAmount,
+                    data.selectedSkinID,
                     data.minutesPlayed
                 );
                 resolve();
@@ -161,11 +183,11 @@ function hideSprite() {
 }
 
 class UserGameState { // GLOBAL between all games
-    constructor(id, gold, unlockedSkins, selectedSkin, minutesPlayed) {
+    constructor(id, gold, ammoAmount, selectedSkinID, minutesPlayed) {
         this.id = id;
         this.gold = gold;
-        this.unlockedSkins = unlockedSkins;
-        this.selectedSkin = selectedSkin;
+        this.ammoAmount = ammoAmount
+        this.selectedSkinID = selectedSkinID;
         this.minutesPlayed = minutesPlayed;
     }
 
@@ -226,4 +248,72 @@ class UserGameSettings {
         $.post("/Game/UpdateUserGameSettings", this);
     }
 
+
+}
+
+
+function getAvailableSkins() {
+    $.ajax({
+        
+        url: '/Skin/GetAvailableSkins',
+        type: 'POST',
+        data: {
+            id: _userGameState.id
+        },
+        dataType: 'json',
+        success: function (data) {
+            console.log('data:');
+            data.forEach((subData) => {
+                console.log(subData);
+            })
+        },
+        error: function (request, error) {
+            alert("Request: " + JSON.stringify(request));
+        }
+    })
+}
+
+function unlockSkin(id) {
+    $.ajax({
+        url: '/Skin/UnlockSkin',
+        type: 'POST',
+        data: {
+            userGameStateID: _userGameState.id,
+            skinID: id,
+            gameID: _gameId
+        },
+        dataType: 'json',
+        success: function (data) {
+            console.log('Data: ', data);
+            if (data.success) {
+                game.gold = data.goldRemaining;
+                _userGameState.gold = data.goldRemaining;
+            }
+        },
+        error: function (request, error) {
+            alert("Request: " + JSON.stringify(request));
+        }
+    })
+}
+
+function selectSkin(id) {
+    $.ajax({
+        url: '/Skin/SelectSkin',
+        type: 'POST',
+        data: {
+            userGameStateID: _userGameState.id,
+            skinID: id
+        },
+        dataType: 'json',
+        success: function (data) {
+            console.log('Data: ', data);
+            if (data.success) {
+                game.sync_player_skin(data.id);
+                _userGameState.selectedSkinID = data.id;
+            }
+        },
+        error: function (request, error) {
+            alert("Request: " + JSON.stringify(request));
+        }
+    });
 }

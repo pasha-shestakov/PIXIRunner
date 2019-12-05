@@ -19,6 +19,8 @@ namespace PIXIRunnerApp.Models
         public DbSet<UserGameState> UserGameState { get; set; }
         public DbSet<UserGameSettings> UserGameSettings { get; set; }
         public DbSet<GameSkin> GameSkin { get; set; }
+        public DbSet<UserUnlockedSkins> UserUnlockedSkins { get; set; }
+
 
     }
 }

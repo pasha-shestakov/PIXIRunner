@@ -166,7 +166,7 @@ export class PhysicsGame  {
         //global not dependant on game
         this.gold = _userGameState.gold;
         this.unlockedSkins = _userGameState.unlockedSkins;
-        this.character = _userGameState.selectedSkin;
+        this.character = _userGameState.selectedSkinID;
         this.timePlayedGlobal = _userGameState.minutesPlayed;
         this.timePlayedSess = 0;
     }
@@ -241,7 +241,7 @@ export class PhysicsGame  {
     }d
 
     init() {
-        this.init_player_skin();
+        
 
         
         /*
@@ -298,8 +298,8 @@ export class PhysicsGame  {
         return displayStr;
     }
 
-    init_player_skin() {
-        switch (this.character) {
+    sync_player_skin(character) {
+        switch (character) {
             case 1:
                 this.character_path = this.character_paths._1;
                 break;
@@ -313,6 +313,13 @@ export class PhysicsGame  {
                 this.character_path = this.character_paths._1; //default to Pink_Monster if skin not found.
                 break;
         }
+
+        if (this.player.facing === "left") {
+            this.player.body.render.sprite.texture = '/Games/1/images/player/' + this.character_path + '/L.png';
+        } else if (this.player.facing === "right") {
+            this.player.body.render.sprite.texture = '/Games/1/images/player/' + this.character_path + '/R.png';
+        }
+
     }
 
     loadPlayers() {
@@ -327,6 +334,7 @@ export class PhysicsGame  {
         }
 
         this.player = this.createPlayer();
+        this.sync_player_skin(this.character);
         this.characterControls();
 
         this.World.add(this.gameWorld, this.player.body);
@@ -1768,9 +1776,11 @@ export class PhysicsGame  {
 
                 if (event.code === 'KeyA') { //LEFT
                     this.player.movement.left = true;
+                    this.player.facing = "left";
                 }
                 if (event.code === 'KeyD') { //RIGHT
                     this.player.movement.right = true;
+                    this.player.facing = "right";
                 }
 
                 if (event.code === 'KeyS') { //DOWN
@@ -2005,6 +2015,7 @@ export class PhysicsGame  {
 
         var player = {
             body: playerBody,
+            facing: "right",
             movement:
             {
                 left: false,
