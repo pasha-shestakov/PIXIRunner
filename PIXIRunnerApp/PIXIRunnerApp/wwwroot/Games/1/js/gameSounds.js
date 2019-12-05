@@ -26,11 +26,6 @@
         sound: new Audio('/Games/1/sounds/throw.wav'),
         scale: 1
     }
-    
-    spike_obj = {
-        sound: new Audio('/Games/1/sounds/spike.wav'),
-        scale: 1
-    }
 
     walk = {
         sound: new Audio('/Games/1/sounds/player_walk.wav'),
@@ -164,10 +159,6 @@
 
     rock_throw() {
         this.play_sound(this.throw_obj);
-    }
-
-    spike() {
-        this.play_sound(this.spike_obj);
     }
 
     player_walk() {
