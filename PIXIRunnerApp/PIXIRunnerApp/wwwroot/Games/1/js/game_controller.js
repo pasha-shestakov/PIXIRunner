@@ -15,23 +15,23 @@ var currentSelection = 0;
 $(document).ready(function () {
 
     _gameId = document.querySelector(".cont").id;
-    $('#selectSkin').click(function (e) {
-        e.preventDefault();
-        let id = $('#selectedIDInput').val();
-        console.log("selecting skin: ", id);
-        selectSkin(id);
-    })
-    $('#getSkins').click(function (e) {
-        e.preventDefault();
-        console.log("getting available skins...");
-        _currentSprites = getAvailableSkins();
-    })
-    $('#unlockSkin').click(function (e) {
-        e.preventDefault();
-        let id = $('#skinIDInput').val();
-        console.log("unlocking skin: ", id);
-        unlockSkin(id);
-    })
+    //$('#selectSkin').click(function (e) {
+    //    e.preventDefault();
+    //    let id = $('#selectedIDInput').val();
+    //    console.log("selecting skin: ", id);
+    //    selectSkin(id);
+    //})
+    //$('#getSkins').click(function (e) {
+    //    e.preventDefault();
+    //    console.log("getting available skins...");
+    //    _currentSprites = getAvailableSkins();
+    //})
+    //$('#unlockSkin').click(function (e) {
+    //    e.preventDefault();
+    //    let id = $('#skinIDInput').val();
+    //    console.log("unlocking skin: ", id);
+    //    unlockSkin(id);
+    //})
 
     $('#play').click((el) => {
         if (currentSelection === 0) {
@@ -174,7 +174,6 @@ function clickedDoor(e) {
 
 function showSprite() {
     // TODO: error checking for non-existent sprites
-    console.log("show sprite pls");
     if ($(this).attr('id').charAt(4) < 3) {
         $(this).attr('src', '/Games/1/images/store/' + $(this).attr('id') + '.png');
     }
@@ -276,37 +275,35 @@ function getAvailableSkins() {
 }
 
 async function unlockSkin(id) {
-        
-        await _userGameState.updateGameState();
-        $.ajax({
-            url: '/Skin/UnlockSkin',
-            type: 'POST',
-            data: {
-                userGameStateID: _userGameState.id,
-                skinID: id,
-                gameID: _gameId,
-            },
-            dataType: 'json',
-            success: function (data) {
-                console.log('Data unlock: ', data);
-                if (data.success) {
-                    game.gold = data.goldRemaining;
-                    _userGameState.gold = data.goldRemaining;
-                    selectSkin(id);
-                }
-                else if (data.msg == 'You already own that skin.') {
-                    console.log('own that skin already lmao');
-                    selectSkin(id);
-                }
-                else if (data.msg == "You do not have enough gold to purchase this skin.") {
-                    alert("You do not have enough gold to purchase this skin.");
-                }
-            },
-            error: function (request, error) {
-                alert("Request: " + JSON.stringify(request));
-            },         
-        })
-    
+    await _userGameState.updateGameState();
+    $.ajax({
+        url: '/Skin/UnlockSkin',
+        type: 'POST',
+        data: {
+            userGameStateID: _userGameState.id,
+            skinID: id,
+            gameID: _gameId,
+        },
+        dataType: 'json',
+        success: function (data) {
+            console.log('Data unlock: ', data);
+            if (data.success) {
+                game.gold = data.goldRemaining;
+                _userGameState.gold = data.goldRemaining;
+                selectSkin(id);
+            }
+            else if (data.msg == 'You already own that skin.') {
+                selectSkin(id);
+            }
+            else if (data.msg == "You do not have enough gold to purchase this skin.") {
+                alert(data.msg);
+            }
+        },
+        error: function (request, error) {
+            alert("Request: " + JSON.stringify(request));
+        },
+    })
+
 }
 
 function selectSkin(id) {
