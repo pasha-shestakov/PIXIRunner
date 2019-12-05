@@ -194,7 +194,7 @@ class UserGameState { // GLOBAL between all games
     }
 
     updateGameState() {
-        $.post("/Game/UpdateUserGameState", this);
+        return $.post("/Game/UpdateUserGameState", this);
     }
 }
 
@@ -275,10 +275,9 @@ function getAvailableSkins() {
     })
 }
 
-function unlockSkin(id) {
-    new Promise((resolve, reject) => {
-        saveGameAutomatically();
-        resolve();
+async function unlockSkin(id) {
+        
+        await _userGameState.updateGameState();
         $.ajax({
             url: '/Skin/UnlockSkin',
             type: 'POST',
@@ -307,7 +306,7 @@ function unlockSkin(id) {
                 alert("Request: " + JSON.stringify(request));
             },         
         })
-    })
+    
 }
 
 function selectSkin(id) {
