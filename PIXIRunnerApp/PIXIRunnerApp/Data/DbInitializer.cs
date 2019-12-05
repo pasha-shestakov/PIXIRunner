@@ -49,12 +49,10 @@ namespace PIXIRunnerApp.Data
 
             var games = new Game[]
             {
-                new Game{ name="Pixel Runner", discription="Lorem ipsum dolor sit amet, consectetur adipiscing elit, " +
-                "sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, " +
-                "quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. " +
-                "Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur." },
-                new Game{ name="Pixel Sprinter", discription="At vero eos et accusamus et iusto odio dignissimos ducimus qui blanditiis praesentium voluptatum deleniti atque corrupti quos dolores et quas" +
-                " molestias excepturi sint occaecati cupiditate non provident, similique sunt in culpa qui officia deserunt mollitia animi, id est laborum et dolorum fuga." }
+                new Game{ name="Pixel Runner", discription="Pixel Runner is a 2D platformer. Explore the dark and mysterious castle " +
+                "and uncover it's dark secrets. But beware the castle is home to several not so friendly skeletons. Collect as much gold as you can and unlock new skins as you play!" },
+                new Game{ name="Pixel Sprinter", discription="Pixel Sprinter, based on Pixel Runner, is an arcade gamemode where you race against the clock to collect as many coins as possible. " +
+                "Compete against other users to claim bragging rights on the leaderboard" }
             };
             foreach (Game g in games)
             {
