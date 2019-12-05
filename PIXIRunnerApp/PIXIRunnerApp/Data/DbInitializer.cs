@@ -59,8 +59,8 @@ namespace PIXIRunnerApp.Data
                 gameContext.Game.Add(g);
                 gameContext.SaveChanges();
                 gameContext.GameSkin.Add(new GameSkin() { Name = "Pink Monster", Cost = 0, GameID = g.gameID }); //added default skin for each game.
-                gameContext.GameSkin.Add(new GameSkin() { Name = "Dude Monster", Cost = 100, GameID = g.gameID }); //added default skin for each game.
-                gameContext.GameSkin.Add(new GameSkin() { Name = "Owlet Monster", Cost = 200, GameID = g.gameID }); //added default skin for each game.
+                gameContext.GameSkin.Add(new GameSkin() { Name = "Dude Monster", Cost = 10, GameID = g.gameID }); //added default skin for each game.
+                gameContext.GameSkin.Add(new GameSkin() { Name = "Owlet Monster", Cost = 20, GameID = g.gameID }); //added default skin for each game.
                 gameContext.SaveChanges();
             }
 
@@ -69,14 +69,14 @@ namespace PIXIRunnerApp.Data
             {
                 gameContext.SaveState.Add(new SaveState { gameID = 1, userID = userID, checkpoint = 0, lives = 4, maxLives = 4 });
                 gameContext.SaveChanges();
-                gameContext.UserGameState.Add(new UserGameState { GameId = 1, AmmoAmount = 40, Gold = 200, MinutesPlayed = 200, SelectedSkinID = 1, UserID = userID });
+                gameContext.UserGameState.Add(new UserGameState { GameId = 1, AmmoAmount = 40, Gold = 0, MinutesPlayed = 200, SelectedSkinID = 1, UserID = userID });
                 gameContext.SaveChanges();
                 //unlocks the first two skins by default for admin user
                 gameContext.UserUnlockedSkins.Add(new UserUnlockedSkins { userGameStateID = 1, skinID = 1 });
-                gameContext.UserUnlockedSkins.Add(new UserUnlockedSkins { userGameStateID = 1, skinID = 2 });
+                // gameContext.UserUnlockedSkins.Add(new UserUnlockedSkins { userGameStateID = 1, skinID = 2 });
                 gameContext.SaveChanges();
             }
-            
-}
+
+        }
     }
 }

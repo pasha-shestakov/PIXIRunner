@@ -276,34 +276,37 @@ function getAvailableSkins() {
 }
 
 function unlockSkin(id) {
-    $.ajax({
-        url: '/Skin/UnlockSkin',
-        type: 'POST',
-        data: {
-            userGameStateID: _userGameState.id,
-            skinID: id,
-            gameID: _gameId
-        },
-        dataType: 'json',
-        success: function (data) {
-            console.log('Data unlock: ', data);
-            if (data.success) {
-                game.gold = data.goldRemaining;
-                _userGameState.gold = data.goldRemaining;
-            }
-            else if (data.msg == 'You already own that skin.') {
-                console.log('own that skin already lmao');
-                selectSkin(id);
-                var sprite = document.getElementById('selected_sprite');
-
-                // DOM skinID is one less than DB skinID
-                sprite.src = '/Games/1/images/store/closed_door.png';
-                setTimeout(function () { sprite.src = '/Games/1/images/store/door' + (id - 1) + '.png'; }, 300);
-            }
-        },
-        error: function (request, error) {
-            alert("Request: " + JSON.stringify(request));
-        }
+    new Promise((resolve, reject) => {
+        saveGameAutomatically();
+        resolve();
+        $.ajax({
+            url: '/Skin/UnlockSkin',
+            type: 'POST',
+            data: {
+                userGameStateID: _userGameState.id,
+                skinID: id,
+                gameID: _gameId,
+            },
+            dataType: 'json',
+            success: function (data) {
+                console.log('Data unlock: ', data);
+                if (data.success) {
+                    game.gold = data.goldRemaining;
+                    _userGameState.gold = data.goldRemaining;
+                    selectSkin(id);
+                }
+                else if (data.msg == 'You already own that skin.') {
+                    console.log('own that skin already lmao');
+                    selectSkin(id);
+                }
+                else if (data.msg == "You do not have enough gold to purchase this skin.") {
+                    alert("You do not have enough gold to purchase this skin.");
+                }
+            },
+            error: function (request, error) {
+                alert("Request: " + JSON.stringify(request));
+            },         
+        })
     })
 }
 
@@ -322,6 +325,11 @@ function selectSkin(id) {
                 game.sync_player_skin(data.id);
                 _userGameState.selectedSkinID = data.id;
             }
+            var sprite = document.getElementById('selected_sprite');
+
+            // DOM skinID is one less than DB skinID
+            sprite.src = '/Games/1/images/store/closed_door.png';
+            setTimeout(function () { sprite.src = '/Games/1/images/store/door' + (id - 1) + '.png'; }, 300);
         },
         error: function (request, error) {
             alert("Request: " + JSON.stringify(request));

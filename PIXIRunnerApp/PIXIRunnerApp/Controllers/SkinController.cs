@@ -80,7 +80,7 @@ namespace PIXIRunnerApp.Controllers
                     return Json(new { success = false, msg = "An unexpected error has occured." });
             }
             else
-               return Json(new { success = false, msg = "You already own that skin." });
+                return Json(new { success = false, msg = "You already own that skin." });
 
         }
 
