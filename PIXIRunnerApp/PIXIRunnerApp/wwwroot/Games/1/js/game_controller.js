@@ -8,7 +8,7 @@ var _userSaveState;
 var _userGameState;
 var _userGameSettings;
 var _gameId;
-var _availibleSprites;
+var _currentSprites;
 
 var currentSelection = 0;
 
@@ -24,7 +24,7 @@ $(document).ready(function () {
     $('#getSkins').click(function (e) {
         e.preventDefault();
         console.log("getting available skins...");
-        getAvailableSkins();
+        _currentSprites = getAvailableSkins();
     })
     $('#unlockSkin').click(function (e) {
         e.preventDefault();
@@ -63,12 +63,6 @@ $(document).ready(function () {
 
     });
 
-    initStoreSetup();
-      
-    $('.closed_door').mouseover(showSprite);
-    $('.closed_door').mouseout(hideSprite);
-    $('.closed_door').click(clickedDoor);
-
     $('#closeStoreBtn').click({ name: 'store' }, toggleOverlay);
     $('#closeSettingsBtn').click({ name: 'settings' }, toggleOverlay);
 
@@ -93,9 +87,9 @@ function initGameSettings() {
             sounds.set_volume('bg', _userGameSettings.musicVolume);
             sounds.set_enabled(_userGameSettings.soundDisabled);
             //document.getElementById('disabled').value = _userGameSettings.soundDisabled ? 'off' : 'on';
-            
+
             document.getElementById('disabled').checked = _userGameSettings.soundDisabled;
-            
+
             let isEnabled = _userGameSettings.soundDisabled
             if (isEnabled) {
                 $('#musicSlider').prop('disabled', true);
@@ -129,10 +123,15 @@ function initGameState() {
         game.onLoad(_userSaveState, _userGameState);
         game.init();
         document.getElementById("launcher").style.display = "none";
+
+        // selected skin is ready, set up store and hook events to the grid objects
+        initStoreSetup();
+        $('.closed_door').mouseover(showSprite);
+        $('.closed_door').mouseout(hideSprite);
+        $('.closed_door').click(clickedDoor);
     });
 
 }
-
 
 window.onbeforeunload = function () {
     saveGameAutomatically();
@@ -158,21 +157,24 @@ function initStoreSetup() {
     };
     store.innerHTML += "<img id=\"selected_text\" src=\"/Games/1/images/store/select.png\" />";
 
-    // TODO: db query this
-    store.innerHTML += "<img id=\"selected_sprite\" src=\"/Games/1/images/store/door0.png\" />";
 
+    // DOM skinID is one less than DB skinID
+    store.innerHTML += "<img id=\"selected_sprite\" src=\"/Games/1/images/store/door" + (_userGameState.selectedSkinID - 1) + ".png\" />";
 }
 
-function showAquired() {
-
-}
-
-function clickedDoor() {
-    // TODO: error checking for non-existent sprites
+function clickedDoor(e) {
+    // DOM skinID is one less than DB skinID
+    var skinID = $(this).attr('id').charAt(4);
+    if (skinID < 3) {
+        e.preventDefault();
+        console.log("unlocking skin: ", skinID++);
+        unlockSkin(skinID++);
+    }
 }
 
 function showSprite() {
     // TODO: error checking for non-existent sprites
+    console.log("show sprite pls");
     if ($(this).attr('id').charAt(4) < 3) {
         $(this).attr('src', '/Games/1/images/store/' + $(this).attr('id') + '.png');
     }
@@ -254,7 +256,7 @@ class UserGameSettings {
 
 function getAvailableSkins() {
     $.ajax({
-        
+
         url: '/Skin/GetAvailableSkins',
         type: 'POST',
         data: {
@@ -262,7 +264,7 @@ function getAvailableSkins() {
         },
         dataType: 'json',
         success: function (data) {
-            console.log('data:');
+            console.log('data get skin:');
             data.forEach((subData) => {
                 console.log(subData);
             })
@@ -284,10 +286,19 @@ function unlockSkin(id) {
         },
         dataType: 'json',
         success: function (data) {
-            console.log('Data: ', data);
+            console.log('Data unlock: ', data);
             if (data.success) {
                 game.gold = data.goldRemaining;
                 _userGameState.gold = data.goldRemaining;
+            }
+            else if (data.msg == 'You already own that skin.') {
+                console.log('own that skin already lmao');
+                selectSkin(id);
+                var sprite = document.getElementById('selected_sprite');
+
+                // DOM skinID is one less than DB skinID
+                sprite.src = '/Games/1/images/store/closed_door.png';
+                setTimeout(function () { sprite.src = '/Games/1/images/store/door' + (id - 1) + '.png'; }, 300);
             }
         },
         error: function (request, error) {
@@ -306,7 +317,7 @@ function selectSkin(id) {
         },
         dataType: 'json',
         success: function (data) {
-            console.log('Data: ', data);
+            console.log('Data select: ', data);
             if (data.success) {
                 game.sync_player_skin(data.id);
                 _userGameState.selectedSkinID = data.id;

@@ -38,7 +38,7 @@ namespace PIXIRunnerApp.Controllers
             var unlockedSkin = _context.UserUnlockedSkins.Where(us => us.userGameStateID == userGameStateID && us.skinID == skinID).FirstOrDefault();
             if (gamestate != null && unlockedSkin != null)
             {
-                return Json(new { success = true, msg = "Selected Skin is now " + skinID, id=skinID });
+                return Json(new { success = true, msg = "Selected Skin is now " + skinID, id = skinID });
             }
             else if (gamestate == null)
                 return Json(new { success = false, msg = "The gamestate specified by your request does not exist." });
@@ -68,7 +68,7 @@ namespace PIXIRunnerApp.Controllers
 
                     //part 2 we update the remaining gold inside the game_controller.
                     ugs.Gold -= skin.Cost;
-                    return Json(new { success = true, goldRemaining=ugs.Gold });
+                    return Json(new { success = true, goldRemaining = ugs.Gold });
                 }
                 else if (ugs == null)
                     return Json(new { success = false, msg = "The gamestate associated with your request does not exist." });
@@ -78,10 +78,10 @@ namespace PIXIRunnerApp.Controllers
                     return Json(new { success = false, msg = "You do not have enough gold to purchase this skin." });
                 else
                     return Json(new { success = false, msg = "An unexpected error has occured." });
-                }
+            }
             else
-                return Json(new { success = false, msg = "You already own that skin." });
-            
+               return Json(new { success = false, msg = "You already own that skin." });
+
         }
 
 
