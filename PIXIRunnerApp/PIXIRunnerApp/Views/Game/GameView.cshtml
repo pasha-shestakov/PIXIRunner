@@ -2,6 +2,7 @@
 @{
     ViewData["Title"] = Model.name;
     var saves = ViewData["saves"] as List<SaveState>;
+    var userID = ViewData["userID"] as String;
 
 }
 
@@ -53,33 +54,167 @@
 
     </div>
 </div>
-@*<div id="skinTesting">
-        <form>
-            <div class="form-group">
-                <button class="btn btn-primary" id="getSkins">Get Unlocked Skins</button>
 
-            </div>
-            <div class="form-group">
-                <input class="form-control" id="skinIDInput" type="text" />
-                <button class="btn btn-primary" id="unlockSkin">Unlock Skin</button>
-            </div>
-
-            <div class="form-group">
-                <input class="form-control" id="selectedIDInput" type="text" />
-                <button class="btn btn-primary" id="selectSkin">Select Skin</button>
-            </div>
-
-        </form>
+<div id="reviewEntry">
+    <h4>Your Game Review:</h4>
+    Rating (between 1 and 5): <input type="number" id="rating" min="1" max="5">
+    <br />
+    <br />
+    <textarea id="review" name="message" rows="2" cols="50" style="margin-top: 0px;margin-bottom: 0px;height: 98px;width: 1000px;"></textarea>
+    <br />
+    <button id="submitReview" class="btn btn-primary">Save</button>
+    Last Saved:
+    <span id="timeStamp"></span>
+</div>
 
 
-
-    </div>*@
-
+<div id="gameReviews">
+    <h4>Other reviews for this game:</h4>
+    @*<div class="review" id="review0">
+            <h6>December 5th, 2019 7:39PM.</h6>
+            <span>"I thought this game sucked. The controls were wonky. etc. I wouldn't reccomend this"</span>
+            <br />
+            <h6>Rating: 1 out of 5 stars.</h6>
+        </div>
+        <br />*@
+</div>
 
 
 @section Scripts
-    {
+{
     <script src="/lib/matter-js/matter.min.js"></script>
     <script type="module" src="@("/Games/" + Model.gameID + "/js/gameSounds.js")"></script>
     <script type="module" src="@("/Games/" + Model.gameID + "/js/game_controller.js")"></script>
+
+    <script>
+        //Initializes the tinymce text editor
+        //Source: https://www.tiny.cloud/docs/
+        tinymce.init({
+            selector: '#review',
+        });
+
+
+        $('#submitReview').click(submitReview);
+
+        //Makes an AJAX post request to the server for submitting/altering a review
+        function submitReview() {
+            const content = tinyMCE.get('review').getContent({ format: 'raw' });
+            var rating = document.getElementById('rating').value;
+
+            //TODO: validate tinymce for no content
+
+            if (rating == null || rating == '') {
+                alert('Please enter a rating.');
+                return;
+            }
+
+            console.log(content + ' ' + rating)
+
+            //Source: https://api.jquery.com/
+            $.ajax({
+                type: "POST",
+                url: "/Review/SetReview",
+                data: {
+                    gameID: @Model.gameID,
+                    userID: '@userID',
+                    text: content,
+                    rating: rating
+                },
+                dataType: 'json',
+                success: function (data) {
+                    const timeStamp = document.getElementById("timeStamp");
+                    timeStamp.innerHTML = moment(data.date).format("LLL");
+
+                    if (data.success) {
+                        // create new review                        
+                        const gameReviews = document.getElementById("gameReviews");
+                        var reviewHTML = '<div class="review" id="review' + data.reviewID + '"><p>' + moment(data.date).format("LLL") + '</p><span>' + data.text + '</span><br /><p>Rating: ' + data.rating + ' out of 5 stars.</p></div><br />';
+                        gameReviews.innerHTML += reviewHTML;
+                    } else {
+                        // alter existing
+                        const reviewBox = document.getElementById('review' + data.reviewID);
+                        var reviewHTML = '<p>' + moment(data.date).format("LLL") + '</p><span>' + data.text + '</span><br /><p>Rating: ' + data.rating + ' out of 5 stars.</p>';
+                        reviewBox.innerHTML = reviewHTML;
+                    }
+
+                },
+                error: function (request, error) {
+                    alert("Request: " + JSON.stringify(request));
+                }
+            })
+        }
+
+        window.onload = function() {
+            //Source: https://api.jquery.com/
+            $.ajax({
+                type: "GET",
+                url: "/Review/GetReview",
+                data: {
+                    gameID: @Model.gameID,
+                    userID: '@userID',
+                },
+                dataType: 'json',
+                success: function (data) {
+                    if (data.success) {
+                        tinyMCE.get('review').setContent(data.text);
+
+                        const rating = document.getElementById("rating");
+                        rating.value = data.rating;
+
+                        const timeStamp = document.getElementById("timeStamp");
+                        timeStamp.innerHTML = moment(data.date).format("LLL");
+                    }
+                },
+                error: function (request, error) {
+                    alert("Request: " + JSON.stringify(request));
+                }
+            })
+
+             $.ajax({
+                type: "GET",
+                url: "/Review/GetGameReviews",
+                data: {
+                    gameID: @Model.gameID,
+                },
+                dataType: 'json',
+                success: function (data) {
+                    if (data.success) {
+                        var reviews = JSON.parse(data.reviews);
+                        console.log(reviews);
+                        const gameReviews = document.getElementById("gameReviews");
+                        for (var i = 0; i < reviews.length; i++) {
+                            var htmlAdd = '<div class="review" id="review' + reviews[i].ID + '"><p>' + moment(reviews[i].Date).format("LLL") + '</p><span>' + reviews[i].Text + '</span><br /><p>Rating: ' + reviews[i].Rating + ' out of 5 stars.</p></div><br />';
+                            gameReviews.innerHTML += htmlAdd;
+                        }
+                    }
+                },
+                error: function (request, error) {
+                    alert("Request: " + JSON.stringify(request));
+                }
+            })
+
+        }
+
+    </script>
 }
+
+
+@*<div id="skinTesting">
+            <form>
+                <div class="form-group">
+                    <button class="btn btn-primary" id="getSkins">Get Unlocked Skins</button>
+
+                </div>
+                <div class="form-group">
+                    <input class="form-control" id="skinIDInput" type="text" />
+                    <button class="btn btn-primary" id="unlockSkin">Unlock Skin</button>
+                </div>
+
+                <div class="form-group">
+                    <input class="form-control" id="selectedIDInput" type="text" />
+                    <button class="btn btn-primary" id="selectSkin">Select Skin</button>
+                </div>
+
+            </form>
+    </div>*@
+

@@ -40,6 +40,26 @@ a.navbar-brand {
     z-index: 4;
 }
 
+#reviewEntry{
+    padding-top: 20px;
+    padding-bottom: 20px;
+}
+
+#gameReviews {
+    display: initial; /* establish flex container */
+    flex-wrap: wrap; /* enable flex items to wrap */
+    justify-content: space-around;
+    padding-left: 100px;
+    padding-right: 40px;
+}
+
+.review {
+    border: double;
+    flex-flow: row wrap;
+    z-index: 4;
+    width: 1000px;
+}
+
 #selected_text {
     display: flex;
     flex-flow: row wrap;

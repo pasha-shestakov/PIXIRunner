@@ -72,9 +72,12 @@ namespace PIXIRunnerApp.Controllers
             else
             {
                 var userID = _userManager.GetUserId(User);
+                ViewData["userID"] = userID;
+
                 var game = _context.Game.Where(g => g.gameID == id).FirstOrDefault();
                 var saves = _context.SaveState.Where(g => g.gameID == id && g.userID == userID).ToList();
                 ViewData["saves"] = saves;
+
                 if (game == null)
                     return NotFound();
                 else
@@ -144,14 +147,15 @@ namespace PIXIRunnerApp.Controllers
             if (gameState != null)
             {
                 return Json(gameState);
-            } else
+            }
+            else
             {
                 //user has not played this game before, we need to set up some default data for them.
 
                 //default selected skin for a user who hasn't ever played this game.
                 var selectedSkin = _context.GameSkin.Where(skin => skin.Name == "Pink Monster" && skin.GameID == gId).FirstOrDefault();
 
-                
+
                 //create new gamestate for new user.
                 var newGameState = new UserGameState()
                 {
@@ -171,7 +175,7 @@ namespace PIXIRunnerApp.Controllers
 
                 return Json(newGameState);
             }
-            
+
 
         }
         //

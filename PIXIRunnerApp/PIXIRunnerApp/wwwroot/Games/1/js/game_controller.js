@@ -8,7 +8,6 @@ var _userSaveState;
 var _userGameState;
 var _userGameSettings;
 var _gameId;
-var _currentSprites;
 
 var currentSelection = 0;
 
@@ -331,4 +330,5 @@ function selectSkin(id) {
             alert("Request: " + JSON.stringify(request));
         }
     });
+
 }
