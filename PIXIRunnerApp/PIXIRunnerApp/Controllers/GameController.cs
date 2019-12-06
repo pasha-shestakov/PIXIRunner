@@ -74,6 +74,9 @@ namespace PIXIRunnerApp.Controllers
                 var userID = _userManager.GetUserId(User);
                 ViewData["userID"] = userID;
 
+                var userName = _userManager.GetUserName(User);
+                ViewData["userName"] = userName;
+
                 var game = _context.Game.Where(g => g.gameID == id).FirstOrDefault();
                 var saves = _context.SaveState.Where(g => g.gameID == id && g.userID == userID).ToList();
                 ViewData["saves"] = saves;
