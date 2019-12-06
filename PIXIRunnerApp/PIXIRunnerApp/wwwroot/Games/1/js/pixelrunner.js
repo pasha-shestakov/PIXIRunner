@@ -936,32 +936,6 @@ export class PhysicsGame  {
             checkpointID: 1,
             checkpointSpawn: { x: sign1.position.x, y: sign1.position.y - 20 }
         };
-
-         //SIGN2 
-        var sign2 = this.Bodies.rectangle(1970, 755, 50, 50, {
-            label: "sign2",
-            isStatic: true,
-            isSensor: true,
-            collisionFilter: {
-                category: this.signFilter
-            },
-            render: {
-                fillStyle: "#7a0a85",
-                sprite: {
-                    texture: '/Games/1/images/world/sign.png',
-                    xScale: 2,
-                    yScale: 2
-                }
-            }
-        });
-        var text2 = "This is a test!";
-
-        this.signs[sign2.id] = {
-            body: sign2,
-            text: text2,
-            checkpointID: 2,
-            checkpointSpawn: { x: sign2.position.x, y: sign2.position.y - 20 }
-        };
         
         
         

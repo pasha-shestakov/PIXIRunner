@@ -14,23 +14,6 @@ var currentSelection = 0;
 $(document).ready(function () {
 
     _gameId = document.querySelector(".cont").id;
-    //$('#selectSkin').click(function (e) {
-    //    e.preventDefault();
-    //    let id = $('#selectedIDInput').val();
-    //    console.log("selecting skin: ", id);
-    //    selectSkin(id);
-    //})
-    //$('#getSkins').click(function (e) {
-    //    e.preventDefault();
-    //    console.log("getting available skins...");
-    //    _currentSprites = getAvailableSkins();
-    //})
-    //$('#unlockSkin').click(function (e) {
-    //    e.preventDefault();
-    //    let id = $('#skinIDInput').val();
-    //    console.log("unlocking skin: ", id);
-    //    unlockSkin(id);
-    //})
 
     $('#play').click((el) => {
         if (currentSelection === 0) {
