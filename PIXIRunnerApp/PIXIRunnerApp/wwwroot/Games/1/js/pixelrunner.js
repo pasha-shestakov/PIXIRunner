@@ -340,7 +340,9 @@ export class PhysicsGame  {
         this.World.add(this.gameWorld, this.player.body);
         this.fix_render_bounds();
     }
-
+    /**
+     * Inialize the overlay canvas with icons and textual display for the HUD.
+     * */
     initOverlay() {
         this.shopIcon = this.Bodies.rectangle(965, 35, 50, 50,
             {
@@ -415,7 +417,9 @@ export class PhysicsGame  {
         this.World.add(this.overlayWorld, this.shopIcon);
         this.World.add(this.overlayWorld, this.settingsIcon);
     }
-
+    /**
+     * Creates the world objects and any entitites and adds them to the world to be rendered.
+     * */
     createWorld() {
         this.generate_chests();
         this.generate_signs();
@@ -483,6 +487,9 @@ export class PhysicsGame  {
         this.overlayRender.mouse = this.mouse;
     }
 
+    /**
+     * Creates doors and inidicators and attaches them to some number of levers.
+     * */
     generate_doors() {
         var doorPosition1 = { x: 1550, y: 720 };
         var door1 = this.Bodies.rectangle(doorPosition1.x, doorPosition1.y, 80, 115,
@@ -570,7 +577,10 @@ export class PhysicsGame  {
 
         }
     }
-
+    /**
+     * Creates levers associated with a door, when all the levers are set as activated, the door can be opened.
+     * @param {any} doorID
+     */
     generate_levers(doorID) {
         var levers = [];
         var door = this.doors[doorID];
@@ -628,6 +638,9 @@ export class PhysicsGame  {
         return levers;
     }
 
+    /**
+     * Creates the world objects that spawn falling rocks, as obstacles to hurt the player.
+     * */
     generate_grates() {
         //grates
         var grate1 = this.Bodies.rectangle(1313, 542, 64, 33,
@@ -652,7 +665,9 @@ export class PhysicsGame  {
             active: true
         }
     }
-
+    /**
+     * Creates ladder world objects for the player to climb.
+     * */
     generate_ladders() {
         var ladder1 = this.Bodies.rectangle(125, 625, 10, 300, {
             label: "ladder1",
@@ -675,7 +690,9 @@ export class PhysicsGame  {
             body: ladder1
         }
     }
-
+    /**
+     * Generates all enemies in the game world and their patrol paths.
+     * */
     generate_enemies() {
 
         
@@ -885,7 +902,9 @@ export class PhysicsGame  {
         }
         
     }
-
+    /**
+     * Generates the background randomly between 3 sprites.
+     * */
     generate_background() {
         this.World.add(this.gameWorld, this.Bodies.rectangle(108, 657, 171, 232, { label: "background", isStatic: true, isSensor: true, render: { sprite: { texture: '/Games/1/images/bg/bg_0.png', xScale: 1, yScale: 1 } } }));
 
@@ -899,6 +918,9 @@ export class PhysicsGame  {
 
     }
 
+    /**
+     * generates walls and floors
+     * */
     generate_floors() {
         this.World.add(this.gameWorld,
             [
@@ -910,7 +932,9 @@ export class PhysicsGame  {
 
         
     }
-
+    /**
+     * Generates signs in the game world as well as their associated text, the signs act as respawn points for the player when they die.
+     * */
     generate_signs() {
         var sign1 = this.Bodies.rectangle(800, 755, 50, 50, {
             label: "sign1",
@@ -940,7 +964,10 @@ export class PhysicsGame  {
         
         
     }
-
+    /**
+     * Generates chests which contain various inventories. When the chest is opened, 
+     * all the inventory contains are throw out as projectiles for the player to then collect.
+     * */
     generate_chests() {
 
         var chest1 = this.Bodies.rectangle(900, 750, 50, 50, {
@@ -972,6 +999,10 @@ export class PhysicsGame  {
         };
     }
 
+    /**
+     * Generates coins in the gameworld which are animated to spin around in circles. Player's can collect these coins
+     * to increase their total gold amount.
+     * */
     generate_coins() {
 
         for (var i = 0; i < 10; i++) {
@@ -1001,7 +1032,8 @@ export class PhysicsGame  {
 
         
     }
- 
+
+
     physicsEvents() {
         this.Events.on(this.mouseconstraint, 'mousemove', (event) => {
             if (this.throwing) {
