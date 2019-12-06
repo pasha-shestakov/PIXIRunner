@@ -35,6 +35,43 @@ namespace PIXIRunnerApp.Data
                 }
             }
 
+            if (userManager.FindByEmailAsync("player1@email.com").Result == null)
+            {
+                IdentityUser user = new IdentityUser
+                {
+                    UserName = "player1",
+                    Email = "player1@email.com"
+                };
+
+
+                IdentityResult result = userManager.CreateAsync(user, "password").Result;
+
+                if (result.Succeeded)
+                {
+                    Console.WriteLine("successfully seeded user");
+                    userIDs.Add(user.Id);
+                }
+            }
+
+            if (userManager.FindByEmailAsync("player2@email.com").Result == null)
+            {
+                IdentityUser user = new IdentityUser
+                {
+                    UserName = "player2",
+                    Email = "player2@email.com"
+                };
+
+
+                IdentityResult result = userManager.CreateAsync(user, "password").Result;
+
+                if (result.Succeeded)
+                {
+                    Console.WriteLine("successfully seeded user");
+                    userIDs.Add(user.Id);
+                }
+            }
+
+
             return userIDs;
         }
 
@@ -64,18 +101,42 @@ namespace PIXIRunnerApp.Data
                 gameContext.SaveChanges();
             }
 
-            //we seed all users with some save state.
-            foreach (string userID in userIDs)
+            for (int i = 0; i < userIDs.Count; i++)
             {
-                gameContext.SaveState.Add(new SaveState { gameID = 1, userID = userID, checkpoint = 0, lives = 4, maxLives = 4 });
+                gameContext.SaveState.Add(new SaveState { gameID = 1, userID = userIDs[i], checkpoint = 0, lives = 4, maxLives = 4 });
                 gameContext.SaveChanges();
-                gameContext.UserGameState.Add(new UserGameState { GameId = 1, AmmoAmount = 40, Gold = 0, MinutesPlayed = 200, SelectedSkinID = 1, UserID = userID });
+                gameContext.UserGameState.Add(new UserGameState { GameId = 1, AmmoAmount = 40, Gold = 0, MinutesPlayed = 200, SelectedSkinID = 1, UserID = userIDs[i] });
                 gameContext.SaveChanges();
-                //unlocks the first two skins by default for admin user
+                //unlocks the first skin by default for admin user
                 gameContext.UserUnlockedSkins.Add(new UserUnlockedSkins { userGameStateID = 1, skinID = 1 });
-                // gameContext.UserUnlockedSkins.Add(new UserUnlockedSkins { userGameStateID = 1, skinID = 2 });
                 gameContext.SaveChanges();
+
+                // leave admin without review
+                if (i == 1)
+                {
+                    gameContext.Review.Add(new Review { Date = DateTime.Now, GameId = 1, Rating = 5, Text = "<h3><em>I love this game so much! I tell all my friends to play it.</em></h3>", UserId = userIDs[i] });
+                    gameContext.SaveChanges();
+                }
+                if (i == 2)
+                {
+                    gameContext.Review.Add(new Review { Date = DateTime.Now, GameId = 1, Rating = 5, Text = "<h1>This is the best game ever! :D</h1>", UserId = userIDs[i] });
+                    gameContext.SaveChanges();
+                }
             }
+
+            //we seed all users with some save state.
+            //foreach (string userID in userIDs)
+            //{
+            //    gameContext.SaveState.Add(new SaveState { gameID = 1, userID = userID, checkpoint = 0, lives = 4, maxLives = 4 });
+            //    gameContext.SaveChanges();
+            //    gameContext.UserGameState.Add(new UserGameState { GameId = 1, AmmoAmount = 40, Gold = 0, MinutesPlayed = 200, SelectedSkinID = 1, UserID = userID });
+            //    gameContext.SaveChanges();
+            //    unlocks the first skin by default for admin user
+            //    gameContext.UserUnlockedSkins.Add(new UserUnlockedSkins { userGameStateID = 1, skinID = 1 });
+            //    gameContext.SaveChanges();
+            //    gameContext.Review.Add(new Review { Date = DateTime.Now, GameId = 1, Rating = 5, Text = "I love this game so much!", UserId = userID });
+            //    gameContext.SaveChanges();
+            //}
 
         }
     }
