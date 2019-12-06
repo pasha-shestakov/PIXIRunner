@@ -30,7 +30,7 @@ a.navbar-brand {
     padding-right: 40px;
 }
 
-#skinTesting{
+#skinTesting {
     display: none;
 }
 
@@ -40,7 +40,7 @@ a.navbar-brand {
     z-index: 4;
 }
 
-#reviewEntry{
+#reviewEntry {
     padding-top: 20px;
     padding-bottom: 20px;
 }
@@ -66,6 +66,13 @@ a.navbar-brand {
     z-index: 4;
 }
 
+#storeHelp {
+    z-index: 6;
+    position: absolute;
+    left: 160px;
+    right: 80px
+}
+
 #selected_sprite {
     display: flex;
     flex-flow: row wrap;
@@ -75,9 +82,7 @@ a.navbar-brand {
 #launcher {
     position: absolute;
     /* Sit on top of the page content */
-
     display: block;
-
     width: 1000px;
     /* Full width (cover the whole page) */
     height: 800px;
@@ -91,7 +96,7 @@ a.navbar-brand {
     /* cursor: pointer; */
     /* Add a pointer on hover */
     padding: 20px;
-} 
+}
 /* source: https://www.w3schools.com/howto/howto_css_overlay.asp */
 ._overlay {
     position: absolute;
@@ -389,4 +394,15 @@ body {
 @font-face {
     font-family: 'Autobus';
     src: url('../fonts/Autobus-Bold.ttf');
+}
+
+@font-face {
+    font-family: 'Arcade';
+    src: url('../fonts/ARCADECLASSIC.TTF');
+}
+
+.ArcadeFont {
+    font-family: Arcade;
+    letter-spacing: 2px;
+    color: lightskyblue;
 }

@@ -295,7 +295,10 @@ async function unlockSkin(id) {
                 selectSkin(id);
             }
             else if (data.msg == "You do not have enough gold to purchase this skin.") {
-                alert(data.msg);
+                swal({
+                    title: data.msg,
+                    icon: "error"
+                });
             }
         },
         error: function (request, error) {
