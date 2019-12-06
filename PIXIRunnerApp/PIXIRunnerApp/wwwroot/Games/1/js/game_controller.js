@@ -149,6 +149,9 @@ function toggleOverlay(event) {
     game.overlayActive = false;
 }
 
+/**
+ * Sets up store with availible skins and the current selected skin.
+ */
 function initStoreSetup() {
     var store = document.getElementById('store_grid');
     for (var i = 0; i < 7; i++) {
@@ -161,23 +164,31 @@ function initStoreSetup() {
     store.innerHTML += "<img id=\"selected_sprite\" src=\"/Games/1/images/store/door" + (_userGameState.selectedSkinID - 1) + ".png\" />";
 }
 
+/**
+ * Calls the POST request to attempt to unlock the clicked skin.
+ */
 function clickedDoor(e) {
-    // DOM skinID is one less than DB skinID
     var skinID = $(this).attr('id').charAt(4);
     if (skinID < 3) {
         e.preventDefault();
         console.log("unlocking skin: ", skinID++);
+        // DOM skinID is one less than DB skinID
         unlockSkin(skinID++);
     }
 }
 
+/**
+ *  When hovering over the doors in the store, the skin is shown.
+ */
 function showSprite() {
-    // TODO: error checking for non-existent sprites
     if ($(this).attr('id').charAt(4) < 3) {
         $(this).attr('src', '/Games/1/images/store/' + $(this).attr('id') + '.png');
     }
 }
 
+/**
+ *  When leaving the bounds of the doors in the store, the closed door is shown.
+ */
 function hideSprite() {
     $(this).attr('src', '/Games/1/images/store/closed_door.png');
 }
@@ -251,7 +262,9 @@ class UserGameSettings {
 
 }
 
-
+/**
+ * Gets the availible skins for the current game.
+ */
 function getAvailableSkins() {
     $.ajax({
 
@@ -273,6 +286,10 @@ function getAvailableSkins() {
     })
 }
 
+/**
+ * Attempts to unlock the specified skin. If the user owns the skin already--then it's selected. Otherwise, it's purchased and selected.
+ * If the user doesn't have enough coins to purchased the specified skin then they are notified.
+ */
 async function unlockSkin(id) {
     await _userGameState.updateGameState();
     $.ajax({
@@ -308,6 +325,9 @@ async function unlockSkin(id) {
 
 }
 
+/**
+ * Sets the specified skin as the user's selcted skin.
+ */
 function selectSkin(id) {
     $.ajax({
         url: '/Skin/SelectSkin',
